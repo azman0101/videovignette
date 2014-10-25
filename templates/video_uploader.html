@@ -1,0 +1,12 @@
+{% extends 'jfu/upload_form.html' %}
+
+{% block JS_OPTS %}
+autoUpload: true,
+maxNumberOfFiles: 5,
+sequentialUploads: true,
+{% endblock %}
+{% block CSS_BOOTSTRAP %}
+        {% comment %}
+        This is already included.
+        {% endcomment %}
+    {% endblock %}
