@@ -2,3 +2,4 @@ frontend/migrations/*
 media/*
 env2.7/*
 *.sqlite3
+*.pyc
