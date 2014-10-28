@@ -1,12 +1,9 @@
 {% extends 'jfu/upload_form.html' %}
 
 {% block JS_OPTS %}
-autoUpload: true,
+autoUpload: false,
 maxNumberOfFiles: 5,
 sequentialUploads: true,
+disableImagePreview: true,
+acceptFileTypes: /(\.|\/)(rms|rec|tp|wpl|aep|bik|piv|dir|avi|swf|srt|mswmm|dzm|fbr|mpeg|otrkey|psh|scm|trp|veg|fcp|m21|msdvd|nvc|rdb|rmp|rsx|usf|vc1|vcpf|viewlet|wvx|dv4|lsx|sfd|vob|mkv|webm|usm|wlmp|wmv|swi|mts|m4v|vro|m2p|dvr|scc|wp3|ts|bin|3gp|mproj|bu|mp4.infovid|aepx|bnp|meta|ogv|r3d|dat|wve|ifo|mp4|pds|prproj|mani|wmd|wmx|mmv|vp3|dzp|lrv|flv|amc|m2t|3g2|mov|stx|xvid|890|avchd|dcr|dmx|mnv|roq|rv|sbk|dnc|f4f|ivf|k3g|moff|qt|spl|mpg|cpi|trec|vgz|mob|asf|str|dxr|dvdmedia|fcproject|ism|ismv|tix|amx|camrec|clpi|f4p|fli|hdv|mvp|f4v|3gpp|divx|smv|gvi|264|dav|mod|aetx|3mm|playlist|mxf|ajp|pmf|video|rmvb|vpj|rm|ale|avp|bdm|bsf|dash|dmsm|dream|hdmov|imovieproj|moi|smil|3gp2|3p2|aaf|arcut|avb|avv|bdmv|bdt3|bmc|ced|cine|cip|cmmp|cmmtpl|cmrec|cst|d2v|d3v|dce|dck|dcr|dmsd|dmss|dpa|dzt|eyetv|fbz|flc|flh|fpdx|ftc|gcs|gfp|gifv|gts|hkm|imovieproject|ircp|ismc|ivr|izz|izzy|jss|jts|jtv|kdenlive|m1pg|m21|m2v|mgv|mj2|mjp|mk3d|mp21|mpgindex|mpls|mpv|mqv|mse|mtv|mvd|mve|mvp|mvy|mxv|ncor|nsv|nuv|ogm|ogx|pac|pgi|photoshow|plproj|ppj|prel|pro|prtl|pxv|qtl|qtz|rcd|rmd|rum|rvid|rvl|screenflow|sdv|sedprj|seq|sfvidcap|siv|smi|smi|smk|stl|svi|swt|tda3mt|thp|tivo|tod|tp0|tpd|tpr|tsp|ttxt|tvlayer|tvshow|vbc|vcv|vdo|vdr|vep|vfz|vlab|vsp|wcp|wmmp|xej|xesc|xfl|xlmv|y4m|zm1|zm2|zm3|lrec|mp4v|mpe|scn|aqt|gom|mpeg4|ssm|zeg|h264|zmv|aec|arf|dpg|mpl|db2|rcproject|vf|tvs|60d|box|vid|dvr-ms|bmk|camproj|edl|snagproj|sqz|dv|dv-avi|evo|eye|m2ts|mp21|avs|int|mp2v|mys|tdt|m15|ssf|vp6|avs|yuv|irf|vivo|asx|movie|axm|cmproj|dmsd3d|dvx|ezt|vp7|xel|aet|avc|avd|awlive|bdt2|bs4|bvr|byu|camv|clk|cx3|ddat|dlx|dmb|dmsm3d|fbr|ffd|flx|gvp|inp|iva|jmv|ktn|lvix|m1v|m2a|m4u|mjpg|mpl|mpsub|mvc|mvex|osp|par|pns|pro4dvd|pro5dvd|proqc|pssd|pva|qtch|qtindex|qtm|rp|rts|sbt|sml|tid|tvrecording|vcr|vem|vfw|vix|vs4|vse|w32|wm|wot|yog|787|wtv|amv|xmv|dif|modd|pvr|vft|grasp|3gpp2|moov|am|anim|bix|cel|cvc|dsy|gl|ismclip|ivs|lsf|m4e|m75|mpeg1|mpf|mpg2|mpv2|msh|mvb|nut|orv|pjs|pmv|psb|rmd|rmv|rts|scm|sec|tdx|vdx|viv)$/i
 {% endblock %}
-{% block CSS_BOOTSTRAP %}
-        {% comment %}
-        This is already included.
-        {% endcomment %}
-    {% endblock %}
