@@ -8,8 +8,20 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.views.decorators.http import require_POST
 from jfu.http import upload_receive, UploadResponse, JFUResponse
+import logging
+
+logger = logging.getLogger('videovignette')
 
 from frontend.models import VideoUploadModel 
+
+class Home(generic.TemplateView):
+    template_name = 'base.html'
+
+    def get_context_data(self, **kwargs):
+        context = super( Home, self ).get_context_data( **kwargs )
+        context['accepted_mime_types'] = ['video/*']
+        return context
+
 
 @require_POST
 def upload(request):
@@ -18,19 +30,25 @@ def upload(request):
     # has been configured to send files one at a time.
     # If multiple files can be uploaded simulatenously,
     # 'file' may be a list of files.
-    file = upload_receive(request)
+    video = upload_receive(request)
 
-    instance = VideoUploadModel(fichier=file)
+    instance = VideoUploadModel(video_file=video, size=video.size, filename=video.name)
+    logger.warning(str(dir(video)))
+    logger.warning(str(video.name))
+    logger.warning(str(video.content_type))
+    logger.warning(str(video.size))
+    logger.warning(str(instance))
+    
     instance.save()
 
-    basename = os.path.basename(instance.fichier.path)
+    basename = os.path.basename(instance.video_file.path)
 
     file_dict = {
         'name' : basename,
-        'size' : file.size,
+        'size' : video.size,
 
         'url': settings.MEDIA_URL + basename,
-        'thumbnailUrl': settings.MEDIA_URL + basename,
+        'thumbnailUrl': settings.STATIC_URL + 'img/video_icon.png',
 
         'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
         'deleteType': 'POST',
@@ -43,7 +61,7 @@ def upload_delete(request, pk):
     success = True
     try:
         instance = VideoUploadModel.objects.get(pk=pk)
-        os.unlink(instance.fichier.path)
+        os.unlink(instance.video_file.path)
         instance.delete()
     except VideoUploadModel.DoesNotExist:
         success = False
@@ -55,8 +73,3 @@ def current_datetime(request):
     html = "<html><body>It is now %s.</body></html>" % now
     return HttpResponse(html)
 
-def my_view(request):
-    # Create a response
-    response = TemplateResponse(request, 'base.html', {})
-    # Return the response
-    return response

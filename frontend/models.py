@@ -1,4 +1,7 @@
 from django.db import models
 
 class VideoUploadModel(models.Model):
-	fichier = models.FileField()
+	video_file = models.FileField()
+	filename = models.CharField(max_length=100)
+	size =	models.IntegerField()
+	
