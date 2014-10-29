@@ -60,7 +60,7 @@
         <div class="container">
             <ul class="nav nav-tabs" role="tablist" id="myTab">
               <li class="active"><a href="#download" role="tab" data-toggle="tab">Télécharger</a></li>
-              <li><a href="#list_video" role="tab" id="list_video" data-toggle="tab">Vidéos</a></li>
+              <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">Vidéos</a></li>
             </ul>
 
             <div class="tab-content">
@@ -72,7 +72,7 @@
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
                       </div>
               </div>
-              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist"></div></div>
+              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">sdsdsdsds</div></div>
             </div>
         </div>
     </div>
@@ -111,7 +111,8 @@
             $(function() {
                 $('#myTab a:first').tab('show')
         })
-            $('a[id="list_video"]').click(function(){
+
+        $('a[id="listvideo"]').click(function(){
                 $.ajax({
                         url: "video_list",
                         type: "GET",
@@ -128,6 +129,7 @@
                         }
                     });
             });
+
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>
         <script src="{% static 'js/main.js' %}"></script>
