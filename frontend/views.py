@@ -1,6 +1,8 @@
 from django.shortcuts import render
 from django.template.response import TemplateResponse
 from django.http import HttpResponse
+from django.views.generic import ListView
+from django.utils import timezone
 import datetime
 import os
 from django.conf import settings
@@ -8,9 +10,11 @@ from django.core.urlresolvers import reverse
 from django.views import generic
 from django.views.decorators.http import require_POST
 from jfu.http import upload_receive, UploadResponse, JFUResponse
-import logging
+import logging, subprocess
+import uuid, time
 
 logger = logging.getLogger('videovignette')
+logger.setLevel('WARNING')
 
 from frontend.models import VideoUploadModel 
 
@@ -22,6 +26,39 @@ class Home(generic.TemplateView):
         context['accepted_mime_types'] = ['video/*']
         return context
 
+
+class VideoListView(ListView):
+
+    model = VideoUploadModel
+
+    def get_context_data(self, **kwargs):
+        context = super(VideoListView, self).get_context_data(**kwargs)
+        logger.warning("VIDEOLISTVIEW: " + str(context))
+        return context
+
+
+def start_ffmpeg(filepath, file_instance):
+    #TODO: check if file exists
+    logger.warning("Check if exits yet... " + filepath)
+    while not os.path.exists(filepath):
+        time.sleep(1)
+        logger.warning("File don't exits yet... " + filepath)
+
+    basename = os.path.basename(filepath)
+    file_instance.processed_folder = get_or_create_dir()
+    bashcommand = 'ffmpeg -i '+ filepath +' -an -f image2 ' + file_instance.processed_folder + '/output_%05d.jpg'
+    file_instance.save()
+    logger.warning("start_ffmpeg: " + bashcommand)
+    process = subprocess.Popen(bashcommand.split(), stdout=subprocess.PIPE)
+    output = process.communicate()[0]
+    logger.warning(output)
+
+def get_or_create_dir():
+    filename = str(uuid.uuid4())
+    seq_path = settings.MEDIA_ROOT + filename
+    if not os.path.exists(seq_path):
+        os.makedirs(seq_path)
+    return seq_path
 
 @require_POST
 def upload(request):
@@ -48,12 +85,12 @@ def upload(request):
         'size' : video.size,
 
         'url': settings.MEDIA_URL + basename,
-        'thumbnailUrl': settings.STATIC_URL + 'img/video_icon.png',
+        'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
 
         'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
         'deleteType': 'POST',
     }
-
+    start_ffmpeg(instance.video_file.path, file_instance=instance)
     return UploadResponse(request, file_dict)
 
 @require_POST

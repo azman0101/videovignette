@@ -4,4 +4,4 @@ class VideoUploadModel(models.Model):
 	video_file = models.FileField()
 	filename = models.CharField(max_length=100)
 	size =	models.IntegerField()
-	
+	processed_folder = models.CharField(max_length=50)

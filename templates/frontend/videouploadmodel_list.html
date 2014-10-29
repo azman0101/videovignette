@@ -1,0 +1,7 @@
+<ul>
+{% for video in object_list %}
+    <li>{{ video.filename|lower }} - {{ video.size|filesizeformat }}</li>
+{% empty %}
+    <li>No video yet.</li>
+{% endfor %}
+</ul>
