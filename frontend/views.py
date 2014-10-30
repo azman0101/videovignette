@@ -33,6 +33,7 @@ class VideoListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
+        context['url_to_processed_folder'] = self.processed_folder
         logger.warning("VIDEOLISTVIEW: " + str(context))
         return context
 
@@ -45,8 +46,9 @@ def start_ffmpeg(filepath, file_instance):
         logger.warning("File don't exits yet... " + filepath)
 
     basename = os.path.basename(filepath)
-    file_instance.processed_folder = get_or_create_dir()
-    bashcommand = 'ffmpeg -i '+ filepath +' -an -f image2 ' + file_instance.processed_folder + '/output_%05d.jpg'
+    abs_pathname, foldername = get_or_create_dir()
+    file_instance.processed_folder = foldername
+    bashcommand = 'ffmpeg -i '+ filepath +' -an -f image2 ' + abs_pathname + '/output_%05d.jpg'
     file_instance.save()
     logger.warning("start_ffmpeg: " + bashcommand)
     process = subprocess.Popen(bashcommand.split(), stdout=subprocess.PIPE)
@@ -54,11 +56,11 @@ def start_ffmpeg(filepath, file_instance):
     logger.warning(output)
 
 def get_or_create_dir():
-    filename = str(uuid.uuid4())
-    seq_path = settings.MEDIA_ROOT + filename
+    foldername = str(uuid.uuid4())
+    seq_path = settings.MEDIA_ROOT + foldername
     if not os.path.exists(seq_path):
         os.makedirs(seq_path)
-    return seq_path
+    return seq_path, foldername
 
 @require_POST
 def upload(request):
