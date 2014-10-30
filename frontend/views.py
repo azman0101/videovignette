@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
 from django.http import HttpResponse
 from django.views.generic import ListView
@@ -33,10 +34,13 @@ class VideoListView(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
-        context['url_to_processed_folder'] = self.processed_folder
+        #context['url_to_processed_folder'] = self.video
         logger.warning("VIDEOLISTVIEW: " + str(context))
         return context
 
+    #def get_queryset(self):
+    #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
+    #    return self.video.processed_folder
 
 def start_ffmpeg(filepath, file_instance):
     #TODO: check if file exists
@@ -107,8 +111,25 @@ def upload_delete(request, pk):
 
     return JFUResponse(request, success)
 
-def current_datetime(request):
-    now = datetime.datetime.now()
-    html = "<html><body>It is now %s.</body></html>" % now
-    return HttpResponse(html)
 
+
+
+class VideoPreview(generic.TemplateView):
+    template_name = 'videopreview.html'
+
+    def get(self, request, *args, **kwargs):
+        path, dirs, files = os.walk(settings.MEDIA_ROOT + args[0]).next()
+        self.folder = args[0]
+        self.file_count = len(files)
+        return super(VideoPreview, self).get(request, *args, **kwargs)
+
+
+    def get_context_data(self, **kwargs):
+        context = super(VideoPreview, self).get_context_data(**kwargs)
+        logger.warning("VideoPreview get_context_data : " + str(kwargs))
+        logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
+        file_listing = []
+        for number in range(1, self.file_count):
+            file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
+        context['file_listing'] = file_listing
+        return context

@@ -1,6 +1,6 @@
 <ul>
 {% for video in object_list %}
-    <li>{{ video.filename|lower }} - {{ video.size|filesizeformat }}</li>
+    <li><a href="#{{ video.processed_folder }}" id="videolisting" >{{ video.filename|lower }}</a>  - {{ video.size|filesizeformat }}</li>
 {% empty %}
     <li>No video yet.</li>
 {% endfor %}

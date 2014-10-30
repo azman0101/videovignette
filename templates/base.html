@@ -61,6 +61,7 @@
             <ul class="nav nav-tabs" role="tablist" id="myTab">
               <li class="active"><a href="#download" role="tab" data-toggle="tab">Télécharger</a></li>
               <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">Vidéos</a></li>
+              <li><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">Prévisualisation</a></li>
             </ul>
 
             <div class="tab-content">
@@ -72,7 +73,8 @@
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
                       </div>
               </div>
-              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">sdsdsdsds</div></div>
+              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">Loading....</div></div>
+              <div class="tab-pane" id="preview_tab"><div class="container">{% block scroll_videoimage %}{% endblock %}</div></div>
             </div>
         </div>
     </div>
@@ -112,7 +114,28 @@
                 $('#myTab a:first').tab('show')
         })
 
-        $('a[id="listvideo"]').click(function(){
+        function listener_videolisting() {
+            $('#videolisting').click(function(e){
+                            var hash = this.hash.substring(1);
+                            $.ajax({
+                                    url: hash,
+                                    type: "GET",
+                                    dataType: "html",
+                                    success: function (data) {
+                                        $('div[id="show_videolist"]').html(data);
+                                    },
+                                    error: function (xhr, status) {
+                                        alert("Sorry, there was a problem!");
+                                    },
+                                    complete: function (xhr, status) {
+                                        $('div[id="show_videolist"]').slideDown('slow');
+
+                                    }
+                                });
+                        });
+        }
+
+        $('#listvideo').click(function(){
                 $.ajax({
                         url: "video_list",
                         type: "GET",
@@ -124,24 +147,17 @@
                             alert("Sorry, there was a problem!");
                         },
                         complete: function (xhr, status) {
-                            $('div[id="show_videolist"]').slideDown('slow');
-
+                            listener_videolisting();
                         }
                     });
             });
+
+
+
 
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>
         <script src="{% static 'js/main.js' %}"></script>
 
-        <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
-        <script>
-            (function(b,o,i,l,e,r){b.GoogleAnalyticsObject=l;b[l]||(b[l]=
-            function(){(b[l].q=b[l].q||[]).push(arguments)});b[l].l=+new Date;
-            e=o.createElement(i);r=o.getElementsByTagName(i)[0];
-            e.src='//www.google-analytics.com/analytics.js';
-            r.parentNode.insertBefore(e,r)}(window,document,'script','ga'));
-            ga('create','UA-XXXXX-X');ga('send','pageview');
-        </script>
     </body>
 </html>
