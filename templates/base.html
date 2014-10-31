@@ -74,7 +74,7 @@
                       </div>
               </div>
               <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">Loading....</div></div>
-              <div class="tab-pane" id="preview_tab"><div class="container">{% block scroll_videoimage %}{% endblock %}</div></div>
+              <div class="tab-pane" id="preview_tab"><div class="container" id="show_videopreview"></div></div>
             </div>
         </div>
     </div>
@@ -122,13 +122,14 @@
                                     type: "GET",
                                     dataType: "html",
                                     success: function (data) {
-                                        $('div[id="show_videolist"]').html(data);
+                                        $('div[id="show_videopreview"]').html(data);
+                                        $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
                                     },
                                     error: function (xhr, status) {
                                         alert("Sorry, there was a problem!");
                                     },
                                     complete: function (xhr, status) {
-                                        $('div[id="show_videolist"]').slideDown('slow');
+                                        $('div[id="show_videopreview"]').slideDown('slow');
 
                                     }
                                 });

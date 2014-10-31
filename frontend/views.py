@@ -129,7 +129,7 @@ class VideoPreview(generic.TemplateView):
         logger.warning("VideoPreview get_context_data : " + str(kwargs))
         logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
         file_listing = []
-        for number in range(1, self.file_count):
+        for number in range(1, 20): #self.file_count
             file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
         context['file_listing'] = file_listing
         return context
