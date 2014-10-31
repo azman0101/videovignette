@@ -118,7 +118,11 @@ class VideoPreview(generic.TemplateView):
     template_name = 'videopreview.html'
 
     def get(self, request, *args, **kwargs):
+        self.count = self.request.GET.get('count')
+        logger.warning("A - VideoPreview GET count: " + str(self.count))
+        logger.warning("VideoPreview GET ARGS: " + str(args))
         path, dirs, files = os.walk(settings.MEDIA_ROOT + args[0]).next()
+        logger.warning("VideoPreview GET : " + str(kwargs))
         self.folder = args[0]
         self.file_count = len(files)
         return super(VideoPreview, self).get(request, *args, **kwargs)
@@ -127,9 +131,17 @@ class VideoPreview(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super(VideoPreview, self).get_context_data(**kwargs)
         logger.warning("VideoPreview get_context_data : " + str(kwargs))
+
+        logger.warning("Count :: " + str(self.count))
+
         logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
         file_listing = []
-        for number in range(1, 20): #self.file_count
-            file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
+        if self.count is None:
+            self.count = 1
+        count = int(self.count) + 6
+        for number in range(int(self.count), int(self.count) + 6): #self.file_count
+            file_listing.append(settings.MEDIA_URL + self.folder + '/res_output_%05d.jpg' % number)
         context['file_listing'] = file_listing
+        context['folder'] = self.folder
+        context['count'] = str(count)
         return context

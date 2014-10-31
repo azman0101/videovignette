@@ -1,9 +1,6 @@
-<div class="scroll_videoimage">
-    <h3>Page 1</h3>
     {% for video_img in file_listing %}
     <img height="100" src="{{ video_img }}" />
     {% empty %}
         <li>No image generated yet.</li>
     {% endfor %}
-    <a href="example-page2.html">next page</a>
-</div>
+    <a href="{{ folder }}/?count={{ count }}">next page</a>

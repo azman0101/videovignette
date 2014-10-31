@@ -129,7 +129,7 @@
                                         alert("Sorry, there was a problem!");
                                     },
                                     complete: function (xhr, status) {
-                                        $('div[id="show_videopreview"]').slideDown('slow');
+                                        $('#show_videopreview').jscroll();
 
                                     }
                                 });
@@ -159,6 +159,7 @@
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>
         <script src="{% static 'js/main.js' %}"></script>
+        <script src="{% static 'js/vendor/jquery.jscroll.min.js' %}"></script>
 
     </body>
 </html>

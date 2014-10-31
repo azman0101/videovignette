@@ -1,3 +1,4 @@
+.DS_Store
 frontend/migrations/*
 media/*
 env2.7/*
