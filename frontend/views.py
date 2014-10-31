@@ -119,10 +119,11 @@ class VideoPreview(generic.TemplateView):
 
     def get(self, request, *args, **kwargs):
         self.count = self.request.GET.get('count')
-        logger.warning("A - VideoPreview GET count: " + str(self.count))
-        logger.warning("VideoPreview GET ARGS: " + str(args))
+        #logger.warning("A - VideoPreview GET count: " + str(self.count))
+        #logger.warning("VideoPreview GET ARGS: " + str(args))
+        #TODO: move this after image creation for count and put to DB
         path, dirs, files = os.walk(settings.MEDIA_ROOT + args[0]).next()
-        logger.warning("VideoPreview GET : " + str(kwargs))
+        #logger.warning("VideoPreview GET : " + str(kwargs))
         self.folder = args[0]
         self.file_count = len(files)
         return super(VideoPreview, self).get(request, *args, **kwargs)
@@ -130,11 +131,11 @@ class VideoPreview(generic.TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(VideoPreview, self).get_context_data(**kwargs)
-        logger.warning("VideoPreview get_context_data : " + str(kwargs))
+        #logger.warning("VideoPreview get_context_data : " + str(kwargs))
 
-        logger.warning("Count :: " + str(self.count))
+        #logger.warning("Count :: " + str(self.count))
 
-        logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
+        #logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
         file_listing = []
         if self.count is None:
             self.count = 1
