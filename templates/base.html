@@ -107,11 +107,14 @@
     </div> <!-- /container -->        
 	<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
         <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
+        <script src="{% static 'js/vendor/jquery.jscroll.js' %}"></script>
+
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
-                $('#myTab a:first').tab('show')
+                $('#myTab a:first').tab('show');
+                target = $('#myTab a:first');
         })
 
         function listener_videolisting() {
@@ -122,6 +125,7 @@
                                     type: "GET",
                                     dataType: "html",
                                     success: function (data) {
+                                        $('div[id="show_videopreview"]').empty()
                                         $('div[id="show_videopreview"]').html(data);
                                         $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
                                     },
@@ -130,7 +134,6 @@
                                     },
                                     complete: function (xhr, status) {
                                         $('#show_videopreview').jscroll();
-
                                     }
                                 });
                         });
@@ -151,16 +154,15 @@
                             listener_videolisting();
                         }
                     });
+                if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+                    $('#show_videopreview').jscroll.destroy()
+                }
             });
-
-
 
 
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>
         <script src="{% static 'js/main.js' %}"></script>
-        <script src="{% static 'js/vendor/jquery.jscroll.min.js' %}"></script>
-        <script src="{% static 'js/vendor/jquery.unveil.js' %}"></script>
 
     </body>
 </html>

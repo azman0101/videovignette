@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import logging, subprocess
 import uuid, time
-from multiprocessing import Pool
+from multiprocessing import Process
 
 logger = logging.getLogger('videovignette')
 logger.setLevel('WARNING')
@@ -79,7 +79,6 @@ def get_or_create_dir():
 @require_POST
 def upload(request):
 
-    #p = Pool(1)
     # The assumption here is that jQuery File Upload
     # has been configured to send files one at a time.
     # If multiple files can be uploaded simulatenously,
@@ -108,9 +107,9 @@ def upload(request):
         'deleteType': 'POST',
     }
 
-    start_ffmpeg(instance.video_file.path, file_instance=instance)
-    #p.map(start_ffmpeg, instance.video_file.path, instance)
-    #p.close()
+    #start_ffmpeg(instance.video_file.path, file_instance=instance)
+    p = Process(target=start_ffmpeg, args=(instance.video_file.path, instance))
+    p.start()
     return UploadResponse(request, file_dict)
 
 @require_POST
@@ -118,7 +117,8 @@ def upload_delete(request, pk):
     success = True
     try:
         instance = VideoUploadModel.objects.get(pk=pk)
-        os.unlink(instance.video_file.path)
+        response = os.unlink(instance.video_file.path)
+        logger.warning("Have to delete %s : %s" % (instance.video_file.path, str(response)))
         instance.delete()
     except VideoUploadModel.DoesNotExist:
         success = False
@@ -132,7 +132,7 @@ class VideoPreview(generic.TemplateView):
     template_name = 'videopreview.html'
 
     def get(self, request, *args, **kwargs):
-        self.count = self.request.GET.get('count')
+        self.start_count = self.request.GET.get('count')
         #logger.warning("A - VideoPreview GET count: " + str(self.count))
         #logger.warning("VideoPreview GET ARGS: " + str(args))
         #TODO: move this after image creation for count and put to DB
@@ -140,7 +140,7 @@ class VideoPreview(generic.TemplateView):
         self.folder = args[0]
         video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
         logger.warning("VideoPreview GET: " + str(video_instance))
-        self.file_count = video_instance.generated_images_count
+        self.max_count = video_instance.generated_images_count
         return super(VideoPreview, self).get(request, *args, **kwargs)
 
 
@@ -152,12 +152,14 @@ class VideoPreview(generic.TemplateView):
 
         #logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
         file_listing = []
-        if self.count is None:
-            self.count = 1
-        count = int(self.count) + 6
-        for number in range(int(self.count), int(self.count) + 6): #self.file_count
+        if self.start_count is None:
+            self.start_count = 1
+        count_end = int(self.start_count) + 6
+        if count_end > self.max_count:
+            count_end = self.max_count + 1
+        for number in range(int(self.start_count), count_end): #self.file_count
             file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
         context['file_listing'] = file_listing
         context['folder'] = self.folder
-        context['count'] = str(count)
+        context['count'] =  str(count_end) if count_end <= self.max_count else 'stop'
         return context

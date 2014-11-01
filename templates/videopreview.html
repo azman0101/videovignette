@@ -1,6 +1,8 @@
     {% for video_img in file_listing %}
     <img height="100" src="{{ video_img }}" />
     {% empty %}
-        <li>No image generated yet.</li>
+        <li>No more image generated or not yet.</li>
     {% endfor %}
-    <a href="{{ folder }}/?count={{ count }}">next page</a>
+    {% if count != 'stop' %}
+        <a href="{{ folder }}/?count={{ count }}">next page</a>
+    {%  endif %}
