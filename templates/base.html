@@ -39,7 +39,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#">Project name</a>
+          <a class="navbar-brand" href="/">Home</a>
         </div>
         <div class="navbar-collapse collapse">
           <form class="navbar-form navbar-right" role="form">
@@ -115,7 +115,7 @@
         })
 
         function listener_videolisting() {
-            $('#videolisting').click(function(e){
+            $('.videolisting').click(function(e){
                             var hash = this.hash.substring(1);
                             $.ajax({
                                     url: hash,

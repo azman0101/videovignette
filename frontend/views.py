@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import logging, subprocess
 import uuid, time
+from multiprocessing import Pool
 
 logger = logging.getLogger('videovignette')
 logger.setLevel('WARNING')
@@ -43,7 +44,7 @@ class VideoListView(ListView):
     #    return self.video.processed_folder
 
 def start_ffmpeg(filepath, file_instance):
-    #TODO: check if file exists
+    #TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
     logger.warning("Check if exits yet... " + filepath)
     while not os.path.exists(filepath):
         time.sleep(1)
@@ -52,12 +53,21 @@ def start_ffmpeg(filepath, file_instance):
     basename = os.path.basename(filepath)
     abs_pathname, foldername = get_or_create_dir()
     file_instance.processed_folder = foldername
-    bashcommand = 'ffmpeg -i '+ filepath +' -an -f image2 ' + abs_pathname + '/output_%05d.jpg'
-    file_instance.save()
+    bashcommand = 'ffmpeg -i '+ filepath +' -vf scale=320:-1 -an -f image2 ' + abs_pathname + '/output_%05d.jpg'
     logger.warning("start_ffmpeg: " + bashcommand)
     process = subprocess.Popen(bashcommand.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
     logger.warning(output)
+    #TODO: evaluate computation time of FFMPEG for wait timeout.
+    process.wait()
+    file_instance.ready = True
+    logger.warning("PATH.. " + abs_pathname)
+    path, dirs, files = os.walk(abs_pathname).next()
+
+    logger.warning("LENGTH.. " + str(len(files)))
+    file_instance.generated_images_count = len(files)
+    file_instance.save()
+
 
 def get_or_create_dir():
     foldername = str(uuid.uuid4())
@@ -69,6 +79,7 @@ def get_or_create_dir():
 @require_POST
 def upload(request):
 
+    #p = Pool(1)
     # The assumption here is that jQuery File Upload
     # has been configured to send files one at a time.
     # If multiple files can be uploaded simulatenously,
@@ -96,7 +107,10 @@ def upload(request):
         'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
         'deleteType': 'POST',
     }
+
     start_ffmpeg(instance.video_file.path, file_instance=instance)
+    #p.map(start_ffmpeg, instance.video_file.path, instance)
+    #p.close()
     return UploadResponse(request, file_dict)
 
 @require_POST
@@ -122,10 +136,11 @@ class VideoPreview(generic.TemplateView):
         #logger.warning("A - VideoPreview GET count: " + str(self.count))
         #logger.warning("VideoPreview GET ARGS: " + str(args))
         #TODO: move this after image creation for count and put to DB
-        path, dirs, files = os.walk(settings.MEDIA_ROOT + args[0]).next()
         #logger.warning("VideoPreview GET : " + str(kwargs))
         self.folder = args[0]
-        self.file_count = len(files)
+        video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
+        logger.warning("VideoPreview GET: " + str(video_instance))
+        self.file_count = video_instance.generated_images_count
         return super(VideoPreview, self).get(request, *args, **kwargs)
 
 
@@ -141,7 +156,7 @@ class VideoPreview(generic.TemplateView):
             self.count = 1
         count = int(self.count) + 6
         for number in range(int(self.count), int(self.count) + 6): #self.file_count
-            file_listing.append(settings.MEDIA_URL + self.folder + '/res_output_%05d.jpg' % number)
+            file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
         context['file_listing'] = file_listing
         context['folder'] = self.folder
         context['count'] = str(count)
