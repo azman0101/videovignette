@@ -15,10 +15,12 @@ import logging, subprocess
 import uuid, time
 from multiprocessing import Process
 
+
 logger = logging.getLogger('videovignette')
 logger.setLevel('WARNING')
 
-from frontend.models import VideoUploadModel 
+from frontend.models import VideoUploadModel, ApplicationSetting
+
 
 class Home(generic.TemplateView):
     template_name = 'base.html'
@@ -42,6 +44,7 @@ class VideoListView(ListView):
     #def get_queryset(self):
     #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
     #    return self.video.processed_folder
+
 
 def start_ffmpeg(filepath, file_instance):
     #TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
