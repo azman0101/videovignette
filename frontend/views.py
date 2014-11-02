@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.views.generic import ListView
 from django.utils import timezone
 import datetime
@@ -13,7 +13,7 @@ from django.views.decorators.http import require_POST
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import logging, subprocess
 import uuid, time
-from multiprocessing import Process
+from multiprocessing import Pool
 
 
 logger = logging.getLogger('videovignette')
@@ -46,7 +46,16 @@ class VideoListView(ListView):
     #    return self.video.processed_folder
 
 
-def start_ffmpeg(filepath, file_instance):
+def start_ffmpeg(filepath, file_instance, configuration_name):
+    try:
+        encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
+    except Http404 as e:
+        #TODO: find a way to push message to Interface via AJAX
+        logger.error("Generation process will stop here, check db ApplicationSetting", str(e))
+        file_instance.ready = False
+        file_instance.save()
+        return
+
     #TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
     logger.warning("Check if exits yet... " + filepath)
     while not os.path.exists(filepath):
@@ -54,37 +63,43 @@ def start_ffmpeg(filepath, file_instance):
         logger.warning("File don't exits yet... " + filepath)
 
     basename = os.path.basename(filepath)
-    abs_pathname, foldername = get_or_create_dir()
-    file_instance.processed_folder = foldername
-    bashcommand = 'ffmpeg -i '+ filepath +' -vf scale=320:-1 -an -f image2 ' + abs_pathname + '/output_%05d.jpg'
-    logger.warning("start_ffmpeg: " + bashcommand)
-    process = subprocess.Popen(bashcommand.split(), stdout=subprocess.PIPE)
+    abs_pathname, folder_name = get_or_create_dir()
+    file_instance.processed_folder = folder_name
+    if configuration_name == 'full_res':
+        prefix = 'full_'
+    else:
+        prefix = 'low_'
+
+    bash_command = 'ffmpeg -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+                   abs_pathname + '/' + prefix + 'output_%05d.jpg'
+    logger.warning('start_ffmpeg: ' + bash_command)
+    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
     logger.warning(output)
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
     file_instance.ready = True
-    logger.warning("PATH.. " + abs_pathname)
+    logger.warning('PATH.. ' + abs_pathname)
     path, dirs, files = os.walk(abs_pathname).next()
 
-    logger.warning("LENGTH.. " + str(len(files)))
+    logger.warning('LENGTH.. ' + str(len(files)))
     file_instance.generated_images_count = len(files)
     file_instance.save()
 
 
 def get_or_create_dir():
-    foldername = str(uuid.uuid4())
-    seq_path = settings.MEDIA_ROOT + foldername
+    folder_name = str(uuid.uuid4())
+    seq_path = settings.MEDIA_ROOT + folder_name
     if not os.path.exists(seq_path):
         os.makedirs(seq_path)
-    return seq_path, foldername
+    return seq_path, folder_name
 
 @require_POST
 def upload(request):
 
     # The assumption here is that jQuery File Upload
     # has been configured to send files one at a time.
-    # If multiple files can be uploaded simulatenously,
+    # If multiple files can be uploaded simultaneously,
     # 'file' may be a list of files.
     video = upload_receive(request)
 
@@ -109,10 +124,13 @@ def upload(request):
         'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
         'deleteType': 'POST',
     }
-
+    pool = Pool()
     #start_ffmpeg(instance.video_file.path, file_instance=instance)
-    p = Process(target=start_ffmpeg, args=(instance.video_file.path, instance))
-    p.start()
+    configuration_to_apply = ['low_res', 'full_res']
+    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name))
+               for configuration_name in configuration_to_apply]
+    for result in results:
+        result.get()
     return UploadResponse(request, file_dict)
 
 @require_POST
@@ -120,8 +138,11 @@ def upload_delete(request, pk):
     success = True
     try:
         instance = VideoUploadModel.objects.get(pk=pk)
-        response = os.unlink(instance.video_file.path)
-        logger.warning("Have to delete %s : %s" % (instance.video_file.path, str(response)))
+        os.unlink(instance.video_file.path)
+        time.sleep(1)
+        if os.path.isfile(instance.video_file.path):
+            raise Exception('File is not deleted')
+        logger.warning("Have to delete %s" % instance.video_file.path)
         instance.delete()
     except VideoUploadModel.DoesNotExist:
         success = False
