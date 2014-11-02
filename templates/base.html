@@ -155,7 +155,7 @@
                         }
                     });
                 if (typeof $('#show_videopreview').jscroll.destroy == "function") {
-                    $('#show_videopreview').jscroll.destroy()
+                    $('#show_videopreview').removeData('jscroll').jscroll.destroy()
                 }
             });
 

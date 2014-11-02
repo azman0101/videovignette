@@ -136,6 +136,7 @@ class VideoPreview(generic.TemplateView):
         #logger.warning("A - VideoPreview GET count: " + str(self.count))
         #logger.warning("VideoPreview GET ARGS: " + str(args))
         #TODO: move this after image creation for count and put to DB
+        time.sleep(1)
         #logger.warning("VideoPreview GET : " + str(kwargs))
         self.folder = args[0]
         video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
