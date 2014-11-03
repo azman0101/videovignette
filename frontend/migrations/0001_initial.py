@@ -46,4 +46,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model,),
         ),
+        migrations.RunPython(
+            forwards_func,
+        ),
     ]
