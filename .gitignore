@@ -1,4 +1,6 @@
 .DS_Store
+
+!frontend/migrations/0001_initial.py
 frontend/migrations/*
 media/*
 env2.7/*
