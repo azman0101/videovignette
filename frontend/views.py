@@ -46,7 +46,7 @@ class VideoListView(ListView):
     #    return self.video.processed_folder
 
 
-def start_ffmpeg(filepath, file_instance, configuration_name):
+def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, folder_name):
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
     except Http404 as e:
@@ -63,7 +63,6 @@ def start_ffmpeg(filepath, file_instance, configuration_name):
         logger.warning("File don't exits yet... " + filepath)
 
     basename = os.path.basename(filepath)
-    abs_pathname, folder_name = get_or_create_dir()
     file_instance.processed_folder = folder_name
     if configuration_name == 'full_res':
         prefix = 'full_'
@@ -126,8 +125,9 @@ def upload(request):
     }
     pool = Pool()
     #start_ffmpeg(instance.video_file.path, file_instance=instance)
+    abs_pathname, folder_name = get_or_create_dir()
     configuration_to_apply = ['low_res', 'full_res']
-    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name))
+    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname, folder_name))
                for configuration_name in configuration_to_apply]
     for result in results:
         result.get()
@@ -160,7 +160,7 @@ class VideoPreview(generic.TemplateView):
         #logger.warning("A - VideoPreview GET count: " + str(self.count))
         #logger.warning("VideoPreview GET ARGS: " + str(args))
         #TODO: move this after image creation for count and put to DB
-        time.sleep(1)
+        #time.sleep(1)
         #logger.warning("VideoPreview GET : " + str(kwargs))
         self.folder = args[0]
         video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
@@ -183,7 +183,8 @@ class VideoPreview(generic.TemplateView):
         if count_end > self.max_count:
             count_end = self.max_count + 1
         for number in range(int(self.start_count), count_end): #self.file_count
-            file_listing.append(settings.MEDIA_URL + self.folder + '/output_%05d.jpg' % number)
+            #TODO: parametrize standard res low or full
+            file_listing.append(settings.MEDIA_URL + self.folder + '/low_output_%05d.jpg' % number)
         context['file_listing'] = file_listing
         context['folder'] = self.folder
         context['count'] =  str(count_end) if count_end <= self.max_count else 'stop'
