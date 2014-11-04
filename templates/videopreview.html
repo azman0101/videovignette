@@ -1,5 +1,5 @@
     {% for video_img in file_listing %}
-    <img height="100" src="{{ video_img }}" />
+    <img class="preview" height="100" data-content="{{ video_img.0 }}" src="{{ video_img.1 }}" />
     {% empty %}
         <li>No more image generated or not yet.</li>
     {% endfor %}

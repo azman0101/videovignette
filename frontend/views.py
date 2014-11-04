@@ -184,7 +184,10 @@ class VideoPreview(generic.TemplateView):
             count_end = self.max_count + 1
         for number in range(int(self.start_count), count_end): #self.file_count
             #TODO: parametrize standard res low or full
-            file_listing.append(settings.MEDIA_URL + self.folder + '/low_output_%05d.jpg' % number)
+            low = settings.MEDIA_URL + self.folder + '/low_output_%05d.jpg' % number
+            full = settings.MEDIA_URL + self.folder + '/full_output_%05d.jpg' % number
+            file_listing.append((full, low))
+
         context['file_listing'] = file_listing
         context['folder'] = self.folder
         context['count'] =  str(count_end) if count_end <= self.max_count else 'stop'
