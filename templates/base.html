@@ -115,8 +115,37 @@
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
+            })
 
-        })
+        // Create an observer instance
+        var observer = new MutationObserver(function( mutations ) {
+          mutations.forEach(function( mutation ) {
+            var newNodes = mutation.addedNodes; // DOM NodeList
+            if( newNodes !== null ) { // If there are new nodes added
+                var $nodes = $( newNodes ); // jQuery set
+                $nodes.each(function() {
+                    var $node = $( this );
+                    if( $node.hasClass( "jscroll-inner" ) ) {
+                        console.log(mutations, observer);
+                        $("img[class='preview']").airview({container: '#show_videopreview', placement: 'bottom'});
+
+                    }
+                });
+            }
+          });
+        });
+
+
+        var target = $("#show_videopreview")[0];
+
+        // define what element should be observed by the observer
+        // and what types of mutations trigger the callback
+        observer.observe(target, {
+          subtree: true,
+          attributes: false,
+          childList: true
+          //...
+        });
 
         function listener_videolisting() {
             $('.videolisting').click(function(e){

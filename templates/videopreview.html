@@ -5,9 +5,4 @@
     {% endfor %}
     {% if count != 'stop' %}
         <a href="{{ folder }}/?count={{ count }}">next page</a>
-    <script type="application/javascript" >
-                    $(function() {
-                        $("img[class='preview']").airview({container: '.jscroll-inner'});
-                    })
-    </script>
     {%  endif %}
