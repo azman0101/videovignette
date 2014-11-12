@@ -5,11 +5,13 @@ from django.http import HttpResponse, Http404
 from django.views.generic import ListView
 from django.utils import timezone
 import datetime
+import StringIO
+import zipfile
 import os
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.views import generic
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import logging, subprocess
 import uuid, time
@@ -69,7 +71,7 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     else:
         prefix = 'low_'
 
-    bash_command = 'ffmpeg -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+    bash_command = 'avconv -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
                    abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
@@ -192,3 +194,44 @@ class VideoPreview(generic.TemplateView):
         context['folder'] = self.folder
         context['count'] =  str(count_end) if count_end <= self.max_count else 'stop'
         return context
+
+
+@require_GET
+def archivegenerator(request, folder):
+    logger.warning("archivegenerator FOLDER: " + str(folder))
+    instance = get_object_or_404(VideoUploadModel, processed_folder=folder)
+    seq_path = settings.MEDIA_ROOT + folder
+    logger.warning("archivegenerator FOLDER ABS: " + str(seq_path))
+    path, dirs, files = os.walk(seq_path).next()
+    filenames = [seq_path + '/' + f for f in files if f.startswith('full_')]
+    logger.warning("archivegenerator FOLDER: " + str(filenames))
+
+    # Folder name in ZIP archive which contains the above files
+    # E.g [thearchive.zip]/somefiles/file2.txt
+    # FIXME: Set this to something better
+    zip_subdir = instance.filename
+    zip_filename = "%s.zip" % zip_subdir
+
+    # Open StringIO to grab in-memory ZIP contents
+    s = StringIO.StringIO()
+
+    # The zip compressor
+    zf = zipfile.ZipFile(s, "w")
+
+    for fpath in filenames:
+        # Calculate path for file in zip
+        fdir, fname = os.path.split(fpath)
+        zip_path = os.path.join(zip_subdir, fname)
+
+        # Add file, at correct path
+        zf.write(fpath, zip_path)
+
+    # Must close zip for all contents to be written
+    zf.close()
+
+    # Grab ZIP file from in-memory, make response with correct MIME-type
+    resp = HttpResponse(s.getvalue(), content_type="application/x-zip-compressed")
+    # ..and correct content-disposition
+    resp['Content-Disposition'] = 'attachment; filename=%s' % zip_filename
+
+    return resp

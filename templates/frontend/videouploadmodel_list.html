@@ -1,7 +1,9 @@
 <ul>
+{% load static from staticfiles %}
+
 {% for video in object_list %}
     {%  if video.ready %}
-        <li><a href="#{{ video.processed_folder }}" class="videolisting" >{{ video.filename|lower }}</a>  - {{ video.size|filesizeformat }}</li>
+        <li><a href="#{{ video.processed_folder }}" class="videolisting" >{{ video.filename|lower }}</a>  - <a href="/archive/{{ video.processed_folder }}/" ><img height="48px" src="{% static 'img/archive.png' %}" /></a> - {{ video.size|filesizeformat }}</li>
     {% endif %}
 {% empty %}
     <li>No video yet.</li>

@@ -12,7 +12,7 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {% bootstrap_css %}
-        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
         <style>
             body {
                 padding-top: 50px;
@@ -70,11 +70,20 @@
                         <h1>Télécharger vos vidéos</h1>
                         <p>La zone ci-dessous vous permet de déposer une ou plusieurs vidéo à traiter.</p>
                         {% load jfutags %}
+                        {% comment %} TODO: Find a way to extend self defined upload_form.html {% endcomment %}
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
                       </div>
               </div>
               <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">Loading....</div></div>
-              <div class="tab-pane" id="preview_tab"><div class="container" id="show_videopreview"></div></div>
+              <div class="tab-pane" id="preview_tab">
+                <div class="container">
+                  <p>
+                    <label for="amount">Frame range:</label>
+                    <input type="text" id="amount" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                    </p>
+                    <div id="slider-range"></div>
+                </div>
+                  <div class="container" id="show_videopreview"></div></div>
             </div>
         </div>
     </div>
@@ -106,19 +115,31 @@
       </footer>
     </div> <!-- /container -->        
 	<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
+        <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
         <script src="{% static 'js/vendor/jquery.jscroll.js' %}"></script>
         <script src="{% static 'js/airview.min.js' %}"></script>
-
+        <script src="{% static 'js/vendor/jquery-ui.min.js' %}"></script>
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
+                $( "#slider-range" ).slider({
+                    range: true,
+                    min: 0,
+                    max: 500,
+                    values: [ 75, 300 ],
+                    slide: function( event, ui ) {
+                    $( "#amount" ).val( ui.values[ 0 ] + " - " + ui.values[ 1 ] );
+                    }
+                    });
+                    $( "#amount" ).val( $( "#slider-range" ).slider( "values", 0 ) +
+                    " - " + $( "#slider-range" ).slider( "values", 1 ) );
             })
 
         // Create an observer instance
-        var observer = new MutationObserver(function( mutations ) {
+{% comment %}
+          var observer = new MutationObserver(function( mutations ) {
           mutations.forEach(function( mutation ) {
             var newNodes = mutation.addedNodes; // DOM NodeList
             if( newNodes !== null ) { // If there are new nodes added
@@ -145,7 +166,7 @@
           attributes: false,
           childList: true
           //...
-        });
+        });{% endcomment %}
 
         function listener_videolisting() {
             $('.videolisting').click(function(e){
