@@ -6,10 +6,12 @@
 
 
 
-
-
-
-
+.modal-body {
+    overflow-y: auto;
+}
+.modal-footer {
+    margin-top: 0;
+}
 
 
 

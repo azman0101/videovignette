@@ -157,30 +157,28 @@ def upload_delete(request, pk):
 class VideoPreview(generic.TemplateView):
     template_name = 'videopreview.html'
 
+    #First GET then get_context_data
     def get(self, request, *args, **kwargs):
+        #Capture count parameter send in URL by the javascript listener_videolisting
         self.start_count = self.request.GET.get('count')
-        #logger.warning("A - VideoPreview GET count: " + str(self.count))
-        #logger.warning("VideoPreview GET ARGS: " + str(args))
         #TODO: move this after image creation for count and put to DB
-        #time.sleep(1)
-        #logger.warning("VideoPreview GET : " + str(kwargs))
+        #Capture folder in URL
         self.folder = args[0]
+        #Lookup database for Video instance
         video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
-        logger.warning("VideoPreview GET: " + str(video_instance))
+        #Retreive instance's number of frame generated
         self.max_count = video_instance.generated_images_count
         return super(VideoPreview, self).get(request, *args, **kwargs)
 
 
     def get_context_data(self, **kwargs):
         context = super(VideoPreview, self).get_context_data(**kwargs)
-        #logger.warning("VideoPreview get_context_data : " + str(kwargs))
-
-        #logger.warning("Count :: " + str(self.count))
-
-        #logger.warning("VideoPreview COUNT from get_context_data : " + str(self.file_count))
+        logger.warning("VideoPreview get_context_data : " + str(context))
         file_listing = []
+        #If count not yet passed by GET, then start to 1
         if self.start_count is None:
             self.start_count = 1
+        #Take only 6 by 6 thumb unless max_count reached
         count_end = int(self.start_count) + 6
         if count_end > self.max_count:
             count_end = self.max_count + 1
@@ -192,7 +190,8 @@ class VideoPreview(generic.TemplateView):
 
         context['file_listing'] = file_listing
         context['folder'] = self.folder
-        context['count'] =  str(count_end) if count_end <= self.max_count else 'stop'
+        context['max'] = self.max_count
+        context['count'] = str(count_end) if count_end <= self.max_count else 'stop'
         return context
 
 

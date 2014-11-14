@@ -22,6 +22,7 @@
         {# Load CSS and JavaScript #}
         <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
+        <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <script src="{% static 'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
     </head>
@@ -88,6 +89,17 @@
         </div>
     </div>
 
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+    </div>
+  </div>
+</div>
+
     <div class="container">
       <!-- Example row of columns -->
       <div class="row">
@@ -119,22 +131,14 @@
         <script src="{% static 'js/vendor/jquery.jscroll.js' %}"></script>
         <script src="{% static 'js/airview.min.js' %}"></script>
         <script src="{% static 'js/vendor/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'js/vendor/URI.js' %}"></script>
+        <script src="{% static 'js/vendor/jquery.Jcrop.min.js' %}"></script>
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
-                $( "#slider-range" ).slider({
-                    range: true,
-                    min: 0,
-                    max: 500,
-                    values: [ 75, 300 ],
-                    slide: function( event, ui ) {
-                    $( "#amount" ).val( ui.values[ 0 ] + " - " + ui.values[ 1 ] );
-                    }
-                    });
-                    $( "#amount" ).val( $( "#slider-range" ).slider( "values", 0 ) +
-                    " - " + $( "#slider-range" ).slider( "values", 1 ) );
+
             })
 
         // Create an observer instance
@@ -168,27 +172,95 @@
           //...
         });{% endcomment %}
 
-        function listener_videolisting() {
-            $('.videolisting').click(function(e){
-                            var hash = this.hash.substring(1);
-                            $.ajax({
-                                    url: hash,
-                                    type: "GET",
-                                    dataType: "html",
-                                    success: function (data) {
-                                        $('div[id="show_videopreview"]').empty()
-                                        $('div[id="show_videopreview"]').html(data);
-                                        $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
-                                    },
-                                    error: function (xhr, status) {
-                                        alert("Sorry, there was a problem!");
-                                    },
-                                    complete: function (xhr, status) {
+            function listener_videolisting() {
+                $('.videolisting').click(function(e){
+                    var hash = this.hash.substring(1);
+                    $.ajax({
+                        url: hash,
+                        type: "GET",
+                        dataType: "html",
+                        success: function (data) {
+                            $('div[id="show_videopreview"]').empty()
+                            $('div[id="show_videopreview"]').html(data);
+                            $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
+                        },
+                        error: function (xhr, status) {
+                            alert("Sorry, there was a problem!");
+                        },
+                        complete: function (xhr, status) {
+                            console.log("COMPLETE: " + xhr);
+                            var max = $('#nextlink').data('max');
+                            $( "#slider-range" ).slider({
+                                range: true,
+                                min: 0,
+                                max: max,
+                                values: [ 0, max ],
+                                slide: function(event, ui) {
+                                    $( "#amount" ).val(ui.values[0] + " - " + ui.values[1]);
+                                    var nextlink = $('#nextlink').attr('href');
+                                    var nt = URI(nextlink).search({ count: ui.values[ 0 ]});
+                                    console.log("TEST NEXTLINK:" + nt.toString());
+                                    $('#nextlink').attr('href', nt.toString());
+                                    if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+                                        $('#show_videopreview').removeData('jscroll').jscroll.destroy()
                                         $('#show_videopreview').jscroll();
                                     }
-                                });
-                        });
-        }
+
+                                }
+                            });
+                            $( "#amount" ).val( $( "#slider-range" ).slider( "values", 0 ) +
+                                    " - " + $( "#slider-range" ).slider( "values", 1 ) );
+                            $('#show_videopreview').jscroll();
+
+                        }
+                    });
+                });
+
+            }
+            function showCoords(c)
+            {
+                console.log("showCoords" + c);
+            }
+
+            $('#myModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Button that triggered the modal
+                var image = button.data('content'); // Extract info from data-* attributes
+                var contentHeight = $(window).height() - 60;
+
+                $(this).find('.modal-content').css({
+                    'max-height': function () {
+                        return contentHeight;
+                    }
+                });
+
+
+                $(this).find('.modal-body').css({
+                    'max-height': function () {
+                        return contentHeight;
+                    }
+                });
+
+                $(this).find('.modal-dialog').css({
+                    'margin-top': function () {
+                        return -($(this).outerHeight() / 5);
+                    },
+                    'margin-left': function () {
+                        return ($(this).outerWidth() / 5);
+                    }
+                });
+                var modal = $(this);
+                //modal.find('.modal-title').append('<img src=' + image + '/>')
+                modal.find('.modal-content').replaceWith('<img class="modal-img" src=' + image + '/>');
+                $(this).find('.modal-img').css({
+                    'max-height': function () {
+                        return contentHeight;
+                    }
+                });
+                $('.modal-img').Jcrop({
+                    onChange: showCoords,
+                    onSelect: showCoords
+                });
+            });
 
         $('#listvideo').click(function(){
                 $.ajax({
