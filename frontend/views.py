@@ -15,7 +15,7 @@ from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import logging, subprocess
 import uuid, time
-from multiprocessing import Pool
+from multiprocessing import Pool, Pipe
 
 
 logger = logging.getLogger('videovignette')
@@ -70,23 +70,29 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         prefix = 'full_'
     else:
         prefix = 'low_'
-
-    bash_command = 'avconv -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+    #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
+    bash_command = 'ffmpeg -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
                    abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
+    #TODO: What about to use stdout to pipe response to main process ?
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
-    logger.warning(output)
+    logger.warning("FFMPEG response " + str(process))
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
-    file_instance.ready = True
-    logger.warning('PATH.. ' + abs_pathname)
-    path, dirs, files = os.walk(abs_pathname).next()
+    #if a process already set file_instance.ready to True then it's useless to count again
+    if file_instance.ready is not True:
+        file_instance.ready = True
+        logger.warning('PATH.. ' + abs_pathname)
 
-    logger.warning('LENGTH.. ' + str(len(files)))
-    file_instance.generated_images_count = len(files)
+        path, dirs, files = os.walk(abs_pathname).next()
+        #Count only the files with prefix
+        files_count = len([f for f in files if f.startswith(prefix)])
+        logger.warning('LENGTH.. ' + str(files_count))
+        file_instance.generated_images_count = files_count
+    #Save instance for modification made on processed_folder and ready
     file_instance.save()
-
+    return output
 
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
@@ -132,7 +138,13 @@ def upload(request):
     results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname, folder_name))
                for configuration_name in configuration_to_apply]
     for result in results:
-        result.get()
+        try:
+            output = result.get()
+            logger.info(output)
+        except OSError as e:
+            #TODO: Handle this error by sending a message to interface.
+            #TODO: Retry process with another decoding app (ffmpeg or avconv)
+            logger.error("Error: FFMPEG" + str(e))
     return UploadResponse(request, file_dict)
 
 @require_POST
