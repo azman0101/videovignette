@@ -74,6 +74,7 @@ WSGI_APPLICATION = 'videovignette.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 if OS == 'Darwin':
+    DEMUXER = '/opt/local/bin/ffmpeg'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -84,6 +85,7 @@ if OS == 'Darwin':
         }
     }
 else:
+    DEMUXER = 'avconv'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

@@ -28,37 +28,36 @@ class Home(generic.TemplateView):
     template_name = 'base.html'
 
     def get_context_data(self, **kwargs):
-        context = super( Home, self ).get_context_data( **kwargs )
+        context = super(Home, self).get_context_data(**kwargs)
         context['accepted_mime_types'] = ['video/*']
         return context
 
 
 class VideoListView(ListView):
-
     model = VideoUploadModel
 
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
-        #context['url_to_processed_folder'] = self.video
+        # context['url_to_processed_folder'] = self.video
         logger.warning("VIDEOLISTVIEW: " + str(context))
         return context
 
-    #def get_queryset(self):
-    #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
-    #    return self.video.processed_folder
+        #def get_queryset(self):
+        #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
+        #    return self.video.processed_folder
 
 
 def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, folder_name):
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
     except Http404 as e:
-        #TODO: find a way to push message to Interface via AJAX
+        # TODO: find a way to push message to Interface via AJAX
         logger.error("Generation process will stop here, check db ApplicationSetting", str(e))
         file_instance.ready = False
         file_instance.save()
         return
 
-    #TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
+    # TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
     logger.warning("Check if exits yet... " + filepath)
     while not os.path.exists(filepath):
         time.sleep(1)
@@ -71,13 +70,12 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
-    bash_command = 'ffmpeg -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+    bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
                    abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-    output = process.communicate()[0]
-    logger.warning("FFMPEG response " + str(process))
+    output, err = process.communicate()
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
     #if a process already set file_instance.ready to True then it's useless to count again
@@ -92,7 +90,8 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         file_instance.generated_images_count = files_count
     #Save instance for modification made on processed_folder and ready
     file_instance.save()
-    return output
+    return output, err
+
 
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
@@ -101,9 +100,9 @@ def get_or_create_dir():
         os.makedirs(seq_path)
     return seq_path, folder_name
 
+
 @require_POST
 def upload(request):
-
     # The assumption here is that jQuery File Upload
     # has been configured to send files one at a time.
     # If multiple files can be uploaded simultaneously,
@@ -116,36 +115,38 @@ def upload(request):
     logger.warning(str(video.content_type))
     logger.warning(str(video.size))
     logger.warning(str(instance))
-    
+
     instance.save()
 
     basename = os.path.basename(instance.video_file.path)
 
     file_dict = {
-        'name' : basename,
-        'size' : video.size,
+        'name': basename,
+        'size': video.size,
 
         'url': settings.MEDIA_URL + basename,
         'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
 
-        'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
+        'deleteUrl': reverse('jfu_delete', kwargs={'pk': instance.pk}),
         'deleteType': 'POST',
     }
     pool = Pool()
-    #start_ffmpeg(instance.video_file.path, file_instance=instance)
+    # start_ffmpeg(instance.video_file.path, file_instance=instance)
     abs_pathname, folder_name = get_or_create_dir()
     configuration_to_apply = ['low_res', 'full_res']
-    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname, folder_name))
+    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname,
+                                               folder_name))
                for configuration_name in configuration_to_apply]
     for result in results:
         try:
-            output = result.get()
-            logger.info(output)
+            output, err = result.get()
+            logger.info("Return of FFMPEG: " + str(output))
         except OSError as e:
             #TODO: Handle this error by sending a message to interface.
             #TODO: Retry process with another decoding app (ffmpeg or avconv)
             logger.error("Error: FFMPEG" + str(e))
     return UploadResponse(request, file_dict)
+
 
 @require_POST
 def upload_delete(request, pk):
@@ -164,12 +165,10 @@ def upload_delete(request, pk):
     return JFUResponse(request, success)
 
 
-
-
 class VideoPreview(generic.TemplateView):
     template_name = 'videopreview.html'
 
-    #First GET then get_context_data
+    # First GET then get_context_data
     def get(self, request, *args, **kwargs):
         #Capture count parameter send in URL by the javascript listener_videolisting
         self.start_count = self.request.GET.get('count')
@@ -194,7 +193,7 @@ class VideoPreview(generic.TemplateView):
         count_end = int(self.start_count) + 6
         if count_end > self.max_count:
             count_end = self.max_count + 1
-        for number in range(int(self.start_count), count_end): #self.file_count
+        for number in range(int(self.start_count), count_end):  #self.file_count
             #TODO: parametrize standard res low or full
             low = settings.MEDIA_URL + self.folder + '/low_output_%05d.jpg' % number
             full = settings.MEDIA_URL + self.folder + '/full_output_%05d.jpg' % number
