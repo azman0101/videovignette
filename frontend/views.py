@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+import multiprocessing
+
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -5,6 +8,7 @@ from django.http import HttpResponse, Http404
 from django.views.generic import ListView
 from django.utils import timezone
 import datetime
+import re
 import StringIO
 import zipfile
 import os
@@ -48,6 +52,20 @@ class VideoListView(ListView):
     #    return self.video.processed_folder
 
 
+def ffmpeg_info(output, err):
+    filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})", 'fps': "(Stream #\d.\d: Video:\s?).*?([0-9]+\.[0-9]+)\s?fps"}
+    if output == '':
+        output = err
+    #Split in lines
+    data = {}
+    for key, filter in filters_str.iteritems():
+        value = re.search(filter, output)
+        #Warning: this is always the same group number in the two filter
+        if value is not None:
+            data[key] = value.group(2)
+            #logger.warning("Info ffmpeg: " + str(data))
+    return data
+
 def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, folder_name):
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
@@ -64,20 +82,20 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         time.sleep(1)
         logger.warning("File don't exits yet... " + filepath)
 
-    basename = os.path.basename(filepath)
+    #TO REMOVE : basename unused.
+    #basename = os.path.basename(filepath)
     file_instance.processed_folder = folder_name
     if configuration_name == 'full_res':
         prefix = 'full_'
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
-    bash_command = 'ffmpeg -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+    bash_command = settings.DEMUXER + ' -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
                    abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
-    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-    output = process.communicate()[0]
-    logger.warning("FFMPEG response " + str(process))
+    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    output, err = process.communicate()
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
     #if a process already set file_instance.ready to True then it's useless to count again
@@ -92,7 +110,7 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         file_instance.generated_images_count = files_count
     #Save instance for modification made on processed_folder and ready
     file_instance.save()
-    return output
+    return output, err
 
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
@@ -116,35 +134,45 @@ def upload(request):
     logger.warning(str(video.content_type))
     logger.warning(str(video.size))
     logger.warning(str(instance))
-    
     instance.save()
 
     basename = os.path.basename(instance.video_file.path)
 
     file_dict = {
-        'name' : basename,
-        'size' : video.size,
+                'name' : basename,
+                'size' : video.size,
 
-        'url': settings.MEDIA_URL + basename,
-        'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
+                'url': settings.MEDIA_URL + basename,
+                'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
 
-        'deleteUrl': reverse('jfu_delete', kwargs = { 'pk': instance.pk }),
-        'deleteType': 'POST',
+                'deleteUrl': reverse('jfu_delete', kwargs={'pk': instance.pk}),
+                'deleteType': 'POST',
     }
+
+
+
     pool = Pool()
-    #start_ffmpeg(instance.video_file.path, file_instance=instance)
     abs_pathname, folder_name = get_or_create_dir()
     configuration_to_apply = ['low_res', 'full_res']
-    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname, folder_name))
+    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname,
+                                               folder_name))
                for configuration_name in configuration_to_apply]
     for result in results:
         try:
-            output = result.get()
+            output, err = result.get()
+            #Parse fps and total duration from output
+            info_ffmpeg = ffmpeg_info(output, err)
+            instance.duration = datetime.datetime.strptime(info_ffmpeg['duration'], "%H:%M:%S.%f")
+            instance.frame_per_second = info_ffmpeg['fps']
             logger.info(output)
+            logger.error(err)
         except OSError as e:
             #TODO: Handle this error by sending a message to interface.
             #TODO: Retry process with another decoding app (ffmpeg or avconv)
             logger.error("Error: FFMPEG" + str(e))
+        finally:
+            instance.save()
+
     return UploadResponse(request, file_dict)
 
 @require_POST
@@ -173,12 +201,15 @@ class VideoPreview(generic.TemplateView):
     def get(self, request, *args, **kwargs):
         #Capture count parameter send in URL by the javascript listener_videolisting
         self.start_count = self.request.GET.get('count')
+        self.fastforward = self.request.GET.get('fastforward', False)
         #TODO: move this after image creation for count and put to DB
         #Capture folder in URL
         self.folder = args[0]
         #Lookup database for Video instance
         video_instance = get_object_or_404(VideoUploadModel, processed_folder=self.folder)
         #Retreive instance's number of frame generated
+        self.fps = video_instance.frame_per_second
+        self.duration = video_instance.duration
         self.max_count = video_instance.generated_images_count
         return super(VideoPreview, self).get(request, *args, **kwargs)
 
@@ -186,12 +217,13 @@ class VideoPreview(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super(VideoPreview, self).get_context_data(**kwargs)
         logger.warning("VideoPreview get_context_data : " + str(context))
+        display_per = 6
         file_listing = []
         #If count not yet passed by GET, then start to 1
         if self.start_count is None:
             self.start_count = 1
         #Take only 6 by 6 thumb unless max_count reached
-        count_end = int(self.start_count) + 6
+        count_end = int(self.start_count) + display_per
         if count_end > self.max_count:
             count_end = self.max_count + 1
         for number in range(int(self.start_count), count_end): #self.file_count
@@ -203,7 +235,14 @@ class VideoPreview(generic.TemplateView):
         context['file_listing'] = file_listing
         context['folder'] = self.folder
         context['max'] = self.max_count
-        context['count'] = str(count_end) if count_end <= self.max_count else 'stop'
+        context['count'] = str(count_end)
+        context['display_per'] = -(display_per + 1)
+        if count_end > self.max_count:
+            context['stop'] = True
+            context['display_per'] = -(display_per - (int(self.max_count) - int(self.start_count)))
+        context['fastforward'] = self.fastforward
+        context['duration'] = self.duration
+        context['fps'] = self.fps
         return context
 
 

@@ -5,6 +5,8 @@ class VideoUploadModel(models.Model):
     video_file = models.FileField()
     filename = models.CharField(max_length=100)
     size = models.IntegerField()
+    frame_per_second = models.FloatField(verbose_name='FPS', null=True)
+    duration = models.DateTimeField(verbose_name='Duration', null=True)
 
     #TODO: Think to saved it as UUID4
     processed_folder = models.CharField(max_length=50)

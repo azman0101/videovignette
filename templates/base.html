@@ -198,7 +198,9 @@
                                 slide: function(event, ui) {
                                     $( "#amount" ).val(ui.values[0] + " - " + ui.values[1]);
                                     var nextlink = $('#nextlink').attr('href');
-                                    var nt = URI(nextlink).search({ count: ui.values[ 0 ]});
+                                    var nt = URI(nextlink)
+                                            .search({count: ui.values[0]})
+                                            .addSearch("fastforward", true);
                                     console.log("TEST NEXTLINK:" + nt.toString());
                                     $('#nextlink').attr('href', nt.toString());
                                     if (typeof $('#show_videopreview').jscroll.destroy == "function") {

@@ -71,9 +71,12 @@ ROOT_URLCONF = 'videovignette.urls'
 WSGI_APPLICATION = 'videovignette.wsgi.application'
 
 
+if OS == 'Linux':
+    DEMUXER = 'avconv'
+
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-if OS == 'Darwin':
+if OS == 'Darwin' or OS == 'Linux':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -177,7 +180,7 @@ BOOTSTRAP3 = {
     'theme_url': None,
 
     # The complete URL to the Bootstrap JavaScript file (None means derive it from base_url)
-    'javascript_url': STATIC_URL  + 'js/vendor/bootstrap.min.js',
+    'javascript_url': STATIC_URL + 'js/vendor/bootstrap.min.js',
 
     # Put JavaScript in the HEAD section of the HTML document (only relevant if you use bootstrap3.html)
     'javascript_in_head': False,
