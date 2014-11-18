@@ -8,14 +8,12 @@
     {% for video_img in file_listing %}
     <figure style="display:inline-block;"><img class="preview" height="100" type="button" data-toggle="modal" data-target="#myModal"
               data-content="{{ video_img.0 }}" src="{{ video_img.1 }}" />
-        {% if count == '7' %}
             <figcaption class="small" >Frame: {{ forloop.counter }}</figcaption>
-        {% else %}
             {% with forloop.counter|add:count|add:display_per as frame %}
                 <figcaption class="small" >Frame: {{ frame }}
                 Current: {% to_time frame fps %}</figcaption>
             {% endwith %}
-        {% endif %}
+
     </figure>
 
     {% empty %}

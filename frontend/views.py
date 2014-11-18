@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import multiprocessing
-
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
@@ -100,8 +100,8 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
-    bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
-                   abs_pathname + '/' + prefix + 'output_%05d.jpg'
+    bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter +\
+                   ' -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -255,6 +255,16 @@ class VideoPreview(generic.TemplateView):
         context['duration'] = self.duration
         context['fps'] = self.fps
         return context
+
+@require_POST
+@csrf_exempt
+def cropselection(request):
+    posted_dict = request.POST.dict()
+    image_url = posted_dict['image_url']
+    path, folder, image = image_url.strip('/').split('/')
+    instance = VideoUploadModel.objects.get(processed_folder=folder)
+
+    logger.warning(str(posted_dict))
 
 
 @require_GET

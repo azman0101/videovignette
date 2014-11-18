@@ -221,8 +221,31 @@
             }
             function showCoords(c)
             {
-                console.log("showCoords" + c);
+                var $input = $('<button type="button" id="selectionBtn" ' +
+                        'class="btn btn-primary" data-toggle="button" data-content="' +
+                        $('.modal-img').attr('src') + '"  aria-pressed="false" autocomplete="off">' +
+                        '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
+
+                $input.appendTo($('.modal-dialog'));
+                $('#selectionBtn').on('click', function(){
+                    var $btn = $(this).button('sending...');
+                    var image = $(this).data('content')
+                    $.ajax({
+                      type: "POST",
+                      url: "cropselection",
+                      data: { x: c.x, y: c.y, w: c.w, h: c.h, x2: c.x2, y2: c.y2, image_url: image }
+                    })
+                      .done(function(msg) {
+                        alert( "Data Saved: " + msg );
+                      });
+                    $btn.button('reset')
+                })
             }
+            function releaseSelection(c)
+            {
+                $('#selectionBtn').remove()
+            }
+
 
             $('#myModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget); // Button that triggered the modal
@@ -259,7 +282,8 @@
                     }
                 });
                 $('.modal-img').Jcrop({
-                    onChange: showCoords,
+                    boxHeight: contentHeight,
+                    onRelease: releaseSelection,
                     onSelect: showCoords
                 });
             });
