@@ -3,7 +3,7 @@
         <div class="alert-info text-center">... FASTFORWARD ...</div>
     {% endif %}
     {% if count == '7' %}
-        <div class="alert-success text-center">Durée: {{ duration|date:"f:s:u" }}</div>
+        <div class="alert-success text-center">Durée: {% global_duration duration %}</div>
     {% endif %}
     {% for video_img in file_listing %}
     <figure style="display:inline-block;"><img class="preview" height="100" type="button" data-toggle="modal" data-target="#myModal"

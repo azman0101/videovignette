@@ -7,6 +7,7 @@ from django.template.response import TemplateResponse
 from django.http import HttpResponse, Http404
 from django.views.generic import ListView
 from django.utils import timezone
+from datetime import timedelta
 import datetime
 import re
 import StringIO
@@ -32,51 +33,60 @@ class Home(generic.TemplateView):
     template_name = 'base.html'
 
     def get_context_data(self, **kwargs):
-        context = super( Home, self ).get_context_data( **kwargs )
+        context = super(Home, self).get_context_data(**kwargs)
         context['accepted_mime_types'] = ['video/*']
         return context
 
 
 class VideoListView(ListView):
-
     model = VideoUploadModel
 
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
-        #context['url_to_processed_folder'] = self.video
+        # context['url_to_processed_folder'] = self.video
         logger.warning("VIDEOLISTVIEW: " + str(context))
         return context
 
-    #def get_queryset(self):
-    #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
-    #    return self.video.processed_folder
+        #def get_queryset(self):
+        #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
+        #    return self.video.processed_folder
 
 
 def ffmpeg_info(output, err):
-    filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})", 'fps': "(Stream #\d.\d: Video:\s?).*?([0-9]+\.[0-9]+)\s?fps"}
+    filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})",
+                   'fps': "(Stream #\d.\d: Video:\s?).*?([0-9]+\.[0-9]+)\s?fps"}
+
     if output == '':
         output = err
-    #Split in lines
+    # Split in lines
     data = {}
     for key, filter in filters_str.iteritems():
         value = re.search(filter, output)
         #Warning: this is always the same group number in the two filter
         if value is not None:
             data[key] = value.group(2)
-            #logger.warning("Info ffmpeg: " + str(data))
+            if key == 'duration':
+                parse_time = re.search(r'(\d{2}):([0-5][0-9]):([0-5][0-9])\.(\d{1,3})', data[key])
+                data['hours'] = int(parse_time.group(1))
+                data['minutes'] = int(parse_time.group(2))
+                data['seconds'] = int(parse_time.group(3))
+                data['microseconds'] = int(parse_time.group(4))
+
+            logger.warning("Info ffmpeg: " + str(data))
     return data
+
 
 def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, folder_name):
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
     except Http404 as e:
-        #TODO: find a way to push message to Interface via AJAX
+        # TODO: find a way to push message to Interface via AJAX
         logger.error("Generation process will stop here, check db ApplicationSetting", str(e))
         file_instance.ready = False
         file_instance.save()
         return
 
-    #TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
+    # TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
     logger.warning("Check if exits yet... " + filepath)
     while not os.path.exists(filepath):
         time.sleep(1)
@@ -90,7 +100,7 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
-    bash_command = settings.DEMUXER + ' -i '+ filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
+    bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter + ' -an -f image2 ' + \
                    abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
@@ -98,6 +108,15 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     output, err = process.communicate()
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
+
+    #Parse fps and total duration from output
+    info_ffmpeg = ffmpeg_info(output, err)
+    tm = timedelta(hours=info_ffmpeg['hours'], minutes=info_ffmpeg['minutes'],
+                                       seconds=info_ffmpeg['seconds'], microseconds=info_ffmpeg['microseconds'])
+    logger.warning('Float seconds: ' + str(tm.total_seconds()))
+    file_instance.duration = tm.total_seconds()
+    file_instance.frame_per_second = info_ffmpeg['fps']
+
     #if a process already set file_instance.ready to True then it's useless to count again
     if file_instance.ready is not True:
         file_instance.ready = True
@@ -112,6 +131,7 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     file_instance.save()
     return output, err
 
+
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
     seq_path = settings.MEDIA_ROOT + folder_name
@@ -119,9 +139,9 @@ def get_or_create_dir():
         os.makedirs(seq_path)
     return seq_path, folder_name
 
+
 @require_POST
 def upload(request):
-
     # The assumption here is that jQuery File Upload
     # has been configured to send files one at a time.
     # If multiple files can be uploaded simultaneously,
@@ -139,17 +159,15 @@ def upload(request):
     basename = os.path.basename(instance.video_file.path)
 
     file_dict = {
-                'name' : basename,
-                'size' : video.size,
+        'name': basename,
+        'size': video.size,
 
-                'url': settings.MEDIA_URL + basename,
-                'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
+        'url': settings.MEDIA_URL + basename,
+        'thumbnailUrl': settings.STATIC_URL + 'img/video_icon_' + str(settings.ICON_SIZE) + '.png',
 
-                'deleteUrl': reverse('jfu_delete', kwargs={'pk': instance.pk}),
-                'deleteType': 'POST',
+        'deleteUrl': reverse('jfu_delete', kwargs={'pk': instance.pk}),
+        'deleteType': 'POST',
     }
-
-
 
     pool = Pool()
     abs_pathname, folder_name = get_or_create_dir()
@@ -160,20 +178,15 @@ def upload(request):
     for result in results:
         try:
             output, err = result.get()
-            #Parse fps and total duration from output
-            info_ffmpeg = ffmpeg_info(output, err)
-            instance.duration = datetime.datetime.strptime(info_ffmpeg['duration'], "%H:%M:%S.%f")
-            instance.frame_per_second = info_ffmpeg['fps']
             logger.info(output)
             logger.error(err)
         except OSError as e:
-            #TODO: Handle this error by sending a message to interface.
+            # TODO: Handle this error by sending a message to interface.
             #TODO: Retry process with another decoding app (ffmpeg or avconv)
             logger.error("Error: FFMPEG" + str(e))
-        finally:
-            instance.save()
 
     return UploadResponse(request, file_dict)
+
 
 @require_POST
 def upload_delete(request, pk):
@@ -192,12 +205,10 @@ def upload_delete(request, pk):
     return JFUResponse(request, success)
 
 
-
-
 class VideoPreview(generic.TemplateView):
     template_name = 'videopreview.html'
 
-    #First GET then get_context_data
+    # First GET then get_context_data
     def get(self, request, *args, **kwargs):
         #Capture count parameter send in URL by the javascript listener_videolisting
         self.start_count = self.request.GET.get('count')
@@ -226,7 +237,7 @@ class VideoPreview(generic.TemplateView):
         count_end = int(self.start_count) + display_per
         if count_end > self.max_count:
             count_end = self.max_count + 1
-        for number in range(int(self.start_count), count_end): #self.file_count
+        for number in range(int(self.start_count), count_end):  #self.file_count
             #TODO: parametrize standard res low or full
             low = settings.MEDIA_URL + self.folder + '/low_output_%05d.jpg' % number
             full = settings.MEDIA_URL + self.folder + '/full_output_%05d.jpg' % number
