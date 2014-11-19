@@ -1,14 +1,11 @@
 # -*- coding: utf-8 -*-
-import multiprocessing
+
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
 from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
 from django.http import HttpResponse, Http404
 from django.views.generic import ListView
-from django.utils import timezone
 from datetime import timedelta
-import datetime
+from PIL import Image
 import re
 import StringIO
 import zipfile
@@ -16,17 +13,23 @@ import os
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.views import generic
+from django.core.files.images import ImageFile
+from django.core.files.base import ContentFile
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
-import logging, subprocess
-import uuid, time
-from multiprocessing import Pool, Pipe
+import logging
+import subprocess
+import uuid
+import time
+from multiprocessing import Pool
 
 
 logger = logging.getLogger('videovignette')
-logger.setLevel('WARNING')
+logger.setLevel('ERROR')
 
-from frontend.models import VideoUploadModel, ApplicationSetting
+from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, Box
 
 
 class Home(generic.TemplateView):
@@ -259,13 +262,40 @@ class VideoPreview(generic.TemplateView):
 @require_POST
 @csrf_exempt
 def cropselection(request):
+    """
+
+    :param request: POST message with box JCrop format
+    :return: Ok string for now
+    """
     posted_dict = request.POST.dict()
     image_url = posted_dict['image_url']
+    del posted_dict['image_url']
+    #update dict by casting value to float
+    [posted_dict.update({k: float(v)}) for k, v in posted_dict.iteritems()]
+    box = Box.create(box=posted_dict)
+    box.save()
     path, folder, image = image_url.strip('/').split('/')
-    instance = VideoUploadModel.objects.get(processed_folder=folder)
+    instance_video = VideoUploadModel.objects.get(processed_folder=folder)
+    # image example name: full_output_00005.jpg
+    image_number = re.search(r'full_output_([0-9]+)\.jpg', image)
+    image_path = settings.MEDIA_ROOT + folder + '/' + image
+    if os.path.isfile(image_path):
+        im = Image.open(image_path)
+        im.crop(box.tuple_box())
+        in_memory_temp = StringIO.StringIO()
+        im.save(in_memory_temp, "JPEG")
+        in_memory_temp.seek(0)
+        file_cropped_img = SimpleUploadedFile(folder + '_' + str(uuid.uuid1()) + '_' + image_number,
+                                              in_memory_temp.read(), content_type='image/jpeg')
+    else:
+        file_cropped_img = None
 
+    instance_croppedframe = CroppedFrame(video_upload_file=instance_video, frame_number=int(image_number.group(1)),
+                                         box=box, cropped_frame_file=file_cropped_img)
+
+    instance_croppedframe.save()
     logger.warning(str(posted_dict))
-
+    return HttpResponse(content="Ok")
 
 @require_GET
 def archivegenerator(request, folder):

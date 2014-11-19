@@ -48,6 +48,7 @@ INSTALLED_APPS = (
     'frontend',
     'bootstrap3',
     'jfu',
+    'taggit',
 )
 
 MIDDLEWARE_CLASSES = (
