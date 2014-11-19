@@ -13,9 +13,9 @@ import os
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.views import generic
-from django.core.files.images import ImageFile
-from django.core.files.base import ContentFile
+import json
 from django.core.files.uploadedfile import SimpleUploadedFile
+from taggit.models import Tag
 
 from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
@@ -261,6 +261,40 @@ class VideoPreview(generic.TemplateView):
 
 @require_POST
 @csrf_exempt
+def attach_tag(request):
+    tag_dict = request.POST.dict()
+    tag = Tag.objects.get(pk=tag_dict['id'])
+    cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
+    cropped_frame.tags.add(tag)
+    cropped_frame.save()
+    return HttpResponse(content="Done")
+
+@require_GET
+def get_tags(request):
+    if request.is_ajax():
+        q = request.GET.get('term', '')
+        tags = Tag.objects.filter(name__icontains=q)[:20]
+        results = []
+        for tag in tags:
+            tag_json = {}
+            tag_json['id'] = tag.id
+            tag_json['label'] = tag.name
+            tag_json['value'] = tag.name
+            results.append(tag_json)
+        data = json.dumps(results)
+    else:
+        data = 'fail'
+    mimetype = 'application/json'
+    return HttpResponse(data, mimetype)
+
+def extract_path_folder_img(posted_dict):
+    image_url = posted_dict['image_url']
+    del posted_dict['image_url']
+    path, folder, image = image_url.strip('/').split('/')
+    return path, folder, image
+
+@require_POST
+@csrf_exempt
 def cropselection(request):
     """
 
@@ -268,13 +302,12 @@ def cropselection(request):
     :return: Ok string for now
     """
     posted_dict = request.POST.dict()
-    image_url = posted_dict['image_url']
-    del posted_dict['image_url']
+    path, folder, image = extract_path_folder_img(posted_dict)
+    assert(not posted_dict.has_key('image_url'))
     #update dict by casting value to int
     [posted_dict.update({k: int(v)}) for k, v in posted_dict.iteritems()]
     box = Box.create(box=posted_dict)
 
-    path, folder, image = image_url.strip('/').split('/')
     instance_video = VideoUploadModel.objects.get(processed_folder=folder)
     # image example name: full_output_00005.jpg
     image_number = re.search(r'full_output_([0-9]+)\.jpg', image)
@@ -296,7 +329,7 @@ def cropselection(request):
 
     instance_croppedframe.save()
     logger.warning(str(posted_dict))
-    return HttpResponse(content="Ok")
+    return HttpResponse(content=instance_croppedframe.id)
 
 @require_GET
 def archivegenerator(request, folder):

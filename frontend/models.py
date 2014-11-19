@@ -1,5 +1,7 @@
 from django.db import models
 from taggit.managers import TaggableManager
+from taggit.models import TaggedItemBase
+
 
 class VideoUploadModel(models.Model):
     video_file = models.FileField()
@@ -13,6 +15,9 @@ class VideoUploadModel(models.Model):
 
     generated_images_count = models.BigIntegerField(null=True)
     ready = models.BooleanField(default=False)
+
+class TaggedFrame(TaggedItemBase):
+    content_object = models.ForeignKey('CroppedFrame')
 
 
 class Box(models.Model):
@@ -41,7 +46,7 @@ class CroppedFrame(models.Model):
     frame_number = models.IntegerField(verbose_name="Number of cropped frame")
     box = models.ForeignKey(Box, null=True)
     cropped_frame_file = models.ImageField(upload_to='cropped', null=False)
-    tags = TaggableManager()
+    tags = TaggableManager(through=TaggedFrame)
 
     def delete(self, using=None):
         if self.box:

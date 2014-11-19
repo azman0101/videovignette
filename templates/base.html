@@ -219,32 +219,49 @@
                 });
 
             }
+            function addTag(e, ui) {
+                   $.ajax({
+                      type: "POST",
+                      url: "attach_tag",
+                      data: { id: ui.item.id, term: ui.item.value, cropped_id: $('div#tags').data('cropped-id') }
+                    })
+            }
             function showCoords(c)
             {
                 var $input = $('<button type="button" id="selectionBtn" ' +
-                        'class="btn btn-primary" data-toggle="button" data-content="' +
+                        'class="btn btn-primary" data-toggle="button" data-sending-text="Sending..." data-content="' +
                         $('.modal-img').attr('src') + '"  aria-pressed="false" autocomplete="off">' +
                         '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
 
                 $input.appendTo($('.modal-dialog'));
                 $('#selectionBtn').on('click', function(){
-                    var $btn = $(this).button('sending...');
-                    var image = $(this).data('content')
+                    var $btn = $(this).button('sending');
+                    var image = $(this).data('content');
                     $.ajax({
                       type: "POST",
                       url: "cropselection",
                       data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
                           x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
                     })
-                      .done(function(msg) {
-                        alert( "Data Saved: " + msg );
+                      .done(function(cropped_id) {
+                        var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
+                        $tags.appendTo($('.modal-dialog'));
+                        $("input#tags").autocomplete({
+                            position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
+                            source: "/get_tags/",
+                            minLength: 2,
+                            select: addTag
+                        });
+                        $btn.toggleClass("btn-success")
+
                       });
-                    $btn.button('reset')
+                    //$btn.button('reset')
                 })
             }
             function releaseSelection(c)
             {
                 $('#selectionBtn').remove()
+                $("div#tags").remove()
             }
 
 
