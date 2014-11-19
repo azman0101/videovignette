@@ -16,21 +16,21 @@ class VideoUploadModel(models.Model):
 
 
 class Box(models.Model):
-    h = models.FloatField()
-    w = models.FloatField()
-    x = models.FloatField()
-    y = models.FloatField()
-    x2 = models.FloatField()
-    y2 = models.FloatField()
+    h = models.IntegerField()
+    w = models.IntegerField()
+    x = models.IntegerField()
+    y = models.IntegerField()
+    x2 = models.IntegerField()
+    y2 = models.IntegerField()
 
     @classmethod
     def create(cls, box=None):
-        assert isinstance(box['h'], float)
-        assert isinstance(box['w'], float)
-        assert isinstance(box['x'], float)
-        assert isinstance(box['y'], float)
-        assert isinstance(box['x2'], float)
-        assert isinstance(box['y2'], float)
+        assert isinstance(box['h'], int)
+        assert isinstance(box['w'], int)
+        assert isinstance(box['x'], int)
+        assert isinstance(box['y'], int)
+        assert isinstance(box['x2'], int)
+        assert isinstance(box['y2'], int)
         return cls(h=box['h'], w=box['w'], x=box['x'], y=box['y'], x2=box['x2'], y2=box['y2'])
 
     def tuple_box(self):

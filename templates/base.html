@@ -233,7 +233,8 @@
                     $.ajax({
                       type: "POST",
                       url: "cropselection",
-                      data: { x: c.x, y: c.y, w: c.w, h: c.h, x2: c.x2, y2: c.y2, image_url: image }
+                      data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
+                          x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
                     })
                       .done(function(msg) {
                         alert( "Data Saved: " + msg );

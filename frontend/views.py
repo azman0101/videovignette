@@ -270,10 +270,10 @@ def cropselection(request):
     posted_dict = request.POST.dict()
     image_url = posted_dict['image_url']
     del posted_dict['image_url']
-    #update dict by casting value to float
-    [posted_dict.update({k: float(v)}) for k, v in posted_dict.iteritems()]
+    #update dict by casting value to int
+    [posted_dict.update({k: int(v)}) for k, v in posted_dict.iteritems()]
     box = Box.create(box=posted_dict)
-    box.save()
+
     path, folder, image = image_url.strip('/').split('/')
     instance_video = VideoUploadModel.objects.get(processed_folder=folder)
     # image example name: full_output_00005.jpg
@@ -281,11 +281,12 @@ def cropselection(request):
     image_path = settings.MEDIA_ROOT + folder + '/' + image
     if os.path.isfile(image_path):
         im = Image.open(image_path)
-        im.crop(box.tuple_box())
+        box.save()
+        cropped_img = im.crop(box.tuple_box())
         in_memory_temp = StringIO.StringIO()
-        im.save(in_memory_temp, "JPEG")
+        cropped_img.save(in_memory_temp, "JPEG")
         in_memory_temp.seek(0)
-        file_cropped_img = SimpleUploadedFile(folder + '_' + str(uuid.uuid1()) + '_' + image_number,
+        file_cropped_img = SimpleUploadedFile(folder + '_' + str(uuid.uuid4()) + '_' + str(image_number.group(1)) + '.jpeg',
                                               in_memory_temp.read(), content_type='image/jpeg')
     else:
         file_cropped_img = None
