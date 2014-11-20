@@ -267,7 +267,13 @@ def attach_tag(request):
     cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
     cropped_frame.tags.add(tag)
     cropped_frame.save()
-    return HttpResponse(content="Done")
+    toastr_json = {}
+    toastr_json['type'] = 'success'
+    toastr_json['css'] = 'toast-bottom-left'
+    toastr_json['msg'] = "Added"
+    data = json.dumps(toastr_json)
+    mimetype = 'application/json'
+    return HttpResponse(data, mimetype)
 
 @require_GET
 def get_tags(request):

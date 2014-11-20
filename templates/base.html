@@ -20,8 +20,8 @@
             }
         </style>
         {# Load CSS and JavaScript #}
+        <link rel="stylesheet" href="{% static 'css/toastr.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
-        <link rel="stylesheet" href="{% static 'css/main.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <script src="{% static 'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
@@ -133,6 +133,7 @@
         <script src="{% static 'js/vendor/jquery-ui.min.js' %}"></script>
         <script src="{% static 'js/vendor/URI.js' %}"></script>
         <script src="{% static 'js/vendor/jquery.Jcrop.min.js' %}"></script>
+        <script src="{% static 'js/toastr.min.js' %}"></script>
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
@@ -219,42 +220,78 @@
                 });
 
             }
+
+
             function addTag(e, ui) {
-                   $.ajax({
-                      type: "POST",
-                      url: "attach_tag",
-                      data: { id: ui.item.id, term: ui.item.value, cropped_id: $('div#tags').data('cropped-id') }
-                    })
+                $.ajax({
+                    type: "POST",
+                    url: "attach_tag",
+                    data: { id: ui.item.id, term: ui.item.value, cropped_id: $('div#tags').data('cropped-id') }
+                })
+                        .done(function(response_message){
+                            toastr.options.timeOut = 1000;
+                            toastr.options.fadeOut = 250;
+                            toastr.options.fadeIn = 250;
+
+                            toastr.options.positionClass = response_message.css
+
+                            toastr[response_message.type](response_message.msg);
+                        });
+            }
+
+            function toggleTaggingBtn(ev) {
+                if (ev.type == 'mouseenter') {
+                    $(this).removeClass();
+                    $(this).addClass("btn btn-danger");
+                    $(this).text('Ending tagging');
+                    $(this).unbind('click');
+                    $(this).attr('id', 'selectionEndingTaggingBtn');
+                    $(this).click(function(){
+                       $('#tags').remove();
+                       $(this).remove();
+                    });
+                } else {
+
+                    $(this).attr('id', 'selectionBtn');
+                    $(this).removeClass();
+                    $(this).addClass("btn btn-success");
+                    $(this).button('tagging');
+                }
+
+
             }
             function showCoords(c)
             {
                 var $input = $('<button type="button" id="selectionBtn" ' +
-                        'class="btn btn-primary" data-toggle="button" data-sending-text="Sending..." data-content="' +
+                        'class="btn btn-primary" data-toggle="button" data-tagging-text="Add Tagging ?" data-content="' +
                         $('.modal-img').attr('src') + '"  aria-pressed="false" autocomplete="off">' +
                         '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
 
                 $input.appendTo($('.modal-dialog'));
                 $('#selectionBtn').on('click', function(){
-                    var $btn = $(this).button('sending');
+                    var $btn = $(this).button('tagging');
                     var image = $(this).data('content');
-                    $.ajax({
-                      type: "POST",
-                      url: "cropselection",
-                      data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
-                          x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
-                    })
-                      .done(function(cropped_id) {
-                        var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
-                        $tags.appendTo($('.modal-dialog'));
-                        $("input#tags").autocomplete({
-                            position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
-                            source: "/get_tags/",
-                            minLength: 2,
-                            select: addTag
-                        });
-                        $btn.toggleClass("btn-success")
 
-                      });
+                    $.ajax({
+                        type: "POST",
+                        url: "cropselection",
+                        data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
+                            x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
+                    })
+                            .done(function(cropped_id) {
+                                var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
+                                $tags.appendTo($('.modal-dialog'));
+                                $("input#tags").autocomplete({
+                                    position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
+                                    source: "/get_tags/",
+                                    minLength: 2,
+                                    select: addTag
+                                });
+                                $btn.toggleClass("btn-success")
+                                $("#selectionBtn").hover(toggleTaggingBtn)
+
+
+                            });
                     //$btn.button('reset')
                 })
             }
@@ -306,21 +343,21 @@
                 });
             });
 
-        $('#listvideo').click(function(){
+            $('#listvideo').click(function(){
                 $.ajax({
-                        url: "video_list",
-                        type: "GET",
-                        dataType: "html",
-                        success: function (data) {
-                            $('div[id="show_videolist"]').html(data);
-                        },
-                        error: function (xhr, status) {
-                            alert("Sorry, there was a problem!");
-                        },
-                        complete: function (xhr, status) {
-                            listener_videolisting();
-                        }
-                    });
+                    url: "video_list",
+                    type: "GET",
+                    dataType: "html",
+                    success: function (data) {
+                        $('div[id="show_videolist"]').html(data);
+                    },
+                    error: function (xhr, status) {
+                        alert("Sorry, there was a problem!");
+                    },
+                    complete: function (xhr, status) {
+                        listener_videolisting();
+                    }
+                });
                 if (typeof $('#show_videopreview').jscroll.destroy == "function") {
                     $('#show_videopreview').removeData('jscroll').jscroll.destroy()
                 }
