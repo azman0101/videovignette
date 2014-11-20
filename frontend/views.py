@@ -57,7 +57,7 @@ class VideoListView(ListView):
 
 def ffmpeg_info(output, err):
     filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})",
-                   'fps': "(Stream #\d.\d: Video:\s?).*?([0-9]+\.[0-9]+)\s?fps"}
+                   'fps': "(Stream #\d.\d.*?: Video:\s?).*?([0-9]+.?[0-9]+)\s?fps"}
 
     if output == '':
         output = err
