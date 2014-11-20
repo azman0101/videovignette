@@ -48,6 +48,7 @@ INSTALLED_APPS = (
     'frontend',
     'bootstrap3',
     'jfu',
+    'taggit',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -71,10 +72,15 @@ ROOT_URLCONF = 'videovignette.urls'
 WSGI_APPLICATION = 'videovignette.wsgi.application'
 
 
+if OS == 'Linux':
+    DEMUXER = 'avconv'
+elif OS == 'Darwin':
+    DEMUXER = '/opt/local/bin/ffmpeg'    
+
+
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
-if OS == 'Darwin':
-    DEMUXER = '/opt/local/bin/ffmpeg'
+if OS == 'Darwin' or OS == 'Linux':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
@@ -85,7 +91,6 @@ if OS == 'Darwin':
         }
     }
 else:
-    DEMUXER = 'avconv'
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

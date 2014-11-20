@@ -1,8 +1,24 @@
+    {% load to_time %}
+    {% if fastforward %}
+        <div class="alert-info text-center">... FASTFORWARD ...</div>
+    {% endif %}
+    {% if count == '7' %}
+        <div class="alert-success text-center">Durée: {% global_duration duration %}</div>
+    {% endif %}
     {% for video_img in file_listing %}
-    <img class="preview" height="100" type="button" data-toggle="modal" data-target="#myModal" data-content="{{ video_img.0 }}" src="{{ video_img.1 }}" />
+    <figure style="display:inline-block;"><img class="preview" height="100" type="button" data-toggle="modal" data-target="#myModal"
+              data-content="{{ video_img.0 }}" src="{{ video_img.1 }}" />
+            <figcaption class="small" >Frame: {{ forloop.counter }}</figcaption>
+            {% with forloop.counter|add:count|add:display_per as frame %}
+                <figcaption class="small" >Frame: {{ frame }}
+                Current: {% to_time frame fps %}</figcaption>
+            {% endwith %}
+
+    </figure>
+
     {% empty %}
         <li>No more image generated or not yet.</li>
     {% endfor %}
-    {% if count != 'stop' %}
+    {% if stop != True %}
         <a id='nextlink' href="{{ folder }}/?count={{ count }}" data-max="{{ max }}">next page</a>
     {%  endif %}
