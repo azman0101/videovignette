@@ -2,7 +2,7 @@
 
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.views.generic import ListView
 from datetime import timedelta
 from PIL import Image
@@ -151,6 +151,12 @@ def upload(request):
     # 'file' may be a list of files.
     video = upload_receive(request)
 
+    if not 'video/' in video.content_type:
+        #TODO: handle error for report to user interface
+        return HttpResponseBadRequest(content='Please send only video')
+    else:
+        #TODO: if correct header, check content itself ! “trust but verify.”
+        pass
     instance = VideoUploadModel(video_file=video, size=video.size, filename=video.name)
     logger.warning(str(dir(video)))
     logger.warning(str(video.name))
