@@ -1,5 +1,6 @@
 {% load static from staticfiles %}
 {% load bootstrap3 %}
+{% load i18n %}
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -40,8 +41,24 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">Home</a>
+          <a class="navbar-brand" href="/">{% trans "Home" %}</a>
         </div>
+          <ul class="nav pull-right">
+            <li class="dropdown">
+                <a id="dLabel" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">{% trans "Language" %}<b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                {% for lang in LANGUAGES %}
+                    <li>
+                            <form name="setLang{{ lang.1 }}" action="{% url 'set_language' %}" method="POST">{% csrf_token %}
+                                <input name="next" type="hidden" value="{{ redirect_to }}" />
+                                <input type="hidden" name="language" value="{{ lang.0 }}" />
+                                <a href="#" onclick="document.setLang{{ lang.1 }}.submit();return false;">{{ lang.1 }}</a>
+                            </form>
+                    </li>
+                    {% endfor %}
+            </ul>
+            </li>
+        </ul>
         <div class="navbar-collapse collapse">
           <form class="navbar-form navbar-right" role="form">
             <div class="form-group">
@@ -50,7 +67,7 @@
             <div class="form-group">
               <input type="password" placeholder="Password" class="form-control">
             </div>
-            <button type="submit" class="btn btn-success">Sign in</button>
+            <button type="submit" class="btn btn-success">{% trans "Sign in" %}</button>
           </form>
         </div><!--/.navbar-collapse -->
       </div>
@@ -60,16 +77,16 @@
     <div class="jumbotron">
         <div class="container">
             <ul class="nav nav-tabs" role="tablist" id="myTab">
-              <li class="active"><a href="#download" role="tab" data-toggle="tab">Télécharger</a></li>
-              <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">Vidéos</a></li>
-              <li><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">Prévisualisation</a></li>
+              <li class="active"><a href="#download" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
+              <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">{% trans "Videos" %}</a></li>
+              <li><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">{% trans "Preview" %}</a></li>
             </ul>
 
             <div class="tab-content">
               <div class="tab-pane active" id="download">
                       <div class="container">
-                        <h1>Télécharger vos vidéos</h1>
-                        <p>La zone ci-dessous vous permet de déposer une ou plusieurs vidéo à traiter.</p>
+                        <h1>{% trans "Download your videos" %}</h1>
+                        <p>{% trans "Drop videos below and the system will upload and process them." %}</p>
                         {% load jfutags %}
                         {% comment %} TODO: Find a way to extend self defined upload_form.html {% endcomment %}
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
@@ -139,6 +156,7 @@
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
+                $('.dropdown-toggle').dropdown()
 
             })
 
@@ -225,7 +243,7 @@
             function addTag(e, ui) {
                 $.ajax({
                     type: "POST",
-                    url: "attach_tag",
+                    url: "{% url 'attach_tag' %}",
                     data: { id: ui.item.id, term: ui.item.value, cropped_id: $('div#tags').data('cropped-id') }
                 })
                         .done(function(response_message){
@@ -274,7 +292,7 @@
 
                     $.ajax({
                         type: "POST",
-                        url: "cropselection",
+                        url: "{% url 'crop_selection' %}",
                         data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
                             x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
                     })
@@ -283,7 +301,7 @@
                                 $tags.appendTo($('.modal-dialog'));
                                 $("input#tags").autocomplete({
                                     position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
-                                    source: "/get_tags/",
+                                    source: "{% url 'get_tags' %}",
                                     minLength: 2,
                                     select: addTag
                                 });
@@ -345,7 +363,7 @@
 
             $('#listvideo').click(function(){
                 $.ajax({
-                    url: "video_list",
+                    url: "{% url 'video_list' %}",
                     type: "GET",
                     dataType: "html",
                     success: function (data) {

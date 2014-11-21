@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """
 Django settings for videovignette project.
 
@@ -32,10 +34,20 @@ TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = []
 
+LANGUAGE_COOKIE_DOMAIN = '127.0.0.1'
+
+LANGUAGES = (
+    ('fr', 'Francais'),
+    ('en', 'English'),
+)
+
 TEMPLATE_DIRS = (
     BASE_DIR + "/templates",
 )
 
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, "locale"),
+)
 # Application definition
 
 INSTALLED_APPS = (
@@ -53,6 +65,7 @@ INSTALLED_APPS = (
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -65,6 +78,7 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.contrib.auth.context_processors.auth',
     'django.core.context_processors.request',
     'django.core.context_processors.static',
+    'django.core.context_processors.i18n',
 )
 
 ROOT_URLCONF = 'videovignette.urls'

@@ -16,14 +16,15 @@ from django.views import generic
 import json
 from django.core.files.uploadedfile import SimpleUploadedFile
 from taggit.models import Tag
+from django.utils.translation import ugettext as _
 
 from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
-import logging
 import subprocess
 import uuid
 import time
 from multiprocessing import Pool
+import logging
 
 
 logger = logging.getLogger('videovignette')
@@ -34,6 +35,14 @@ from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, 
 
 class Home(generic.TemplateView):
     template_name = 'base.html'
+
+    def get(self, request, *args, **kwargs):
+
+        logger.warning("request.LANGUAGE_CODE: " + str(request.LANGUAGE_CODE))
+        logger.warning("request.LANGUAGE_CODE: " + str(_("Download your videos")))
+
+        return super(Home, self).get(request, *args, **kwargs)
+
 
     def get_context_data(self, **kwargs):
         context = super(Home, self).get_context_data(**kwargs)
@@ -273,6 +282,7 @@ def attach_tag(request):
     tag = Tag.objects.get(pk=tag_dict['id'])
     cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
     cropped_frame.tags.add(tag)
+    cropped_frame.full_clean()
     cropped_frame.save()
     toastr_json = {}
     toastr_json['type'] = 'success'

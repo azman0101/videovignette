@@ -1,14 +1,20 @@
 from django.db import models
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
+from django.utils.translation import ugettext as _
 
+import logging
+
+
+logger = logging.getLogger('videovignette')
+logger.setLevel('ERROR')
 
 class VideoUploadModel(models.Model):
     video_file = models.FileField()
     filename = models.CharField(max_length=100)
     size = models.IntegerField()
-    frame_per_second = models.FloatField(verbose_name='FPS', null=True)
-    duration = models.FloatField(verbose_name='Duration', null=True)
+    frame_per_second = models.FloatField(verbose_name=_('FPS'), null=True)
+    duration = models.FloatField(verbose_name=_('Duration'), null=True)
 
     #TODO: Think to saved it as UUID4
     processed_folder = models.CharField(max_length=50)
@@ -43,7 +49,7 @@ class Box(models.Model):
 
 class CroppedFrame(models.Model):
     video_upload_file = models.ForeignKey(VideoUploadModel, null=True)
-    frame_number = models.IntegerField(verbose_name="Number of cropped frame")
+    frame_number = models.IntegerField(verbose_name=_("Number of cropped frame"))
     box = models.ForeignKey(Box, null=True)
     cropped_frame_file = models.ImageField(upload_to='cropped', null=False)
     tags = TaggableManager(through=TaggedFrame)
@@ -52,6 +58,15 @@ class CroppedFrame(models.Model):
         if self.box:
             self.box.delete()
         super(CroppedFrame, self).delete(using)
+
+    def clean(self):
+        super(CroppedFrame, self).clean()
+        errors_tags = {}
+        for tag in self.tags.values():
+            if len(tag) > 50:
+                errors_tags[tag] = _("Tag too long !")
+        logger.warning("Clean before tagging: " + str(self.tags.values()))
+
 
 
 class ApplicationSetting(models.Model):

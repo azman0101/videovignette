@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.forms import ImageField, FileInput
 from django.conf import settings
 
-from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, Box
+from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, Box, TaggedFrame
 
 from django import forms
 from django.utils.safestring import mark_safe
@@ -59,4 +59,5 @@ class VideoUploadModelAdmin(admin.ModelAdmin):
 admin.site.register(VideoUploadModel, VideoUploadModelAdmin)
 admin.site.register(ApplicationSetting)
 admin.site.register(CroppedFrame, CroppedFrameAdmin)
+admin.site.register(TaggedFrame)
 #admin.site.register(Box)
