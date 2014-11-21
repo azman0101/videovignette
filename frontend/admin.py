@@ -52,7 +52,11 @@ class CroppedFrameAdmin(admin.ModelAdmin):
         return ", ".join(resp)
 
 
-admin.site.register(VideoUploadModel)
+class VideoUploadModelAdmin(admin.ModelAdmin):
+
+    list_display = ('video_file', 'filename', 'size', 'frame_per_second', 'processed_folder')
+
+admin.site.register(VideoUploadModel, VideoUploadModelAdmin)
 admin.site.register(ApplicationSetting)
 admin.site.register(CroppedFrame, CroppedFrameAdmin)
 #admin.site.register(Box)
