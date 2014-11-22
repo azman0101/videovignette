@@ -300,20 +300,27 @@ def get_tags(request):
         tags = Tag.objects.filter(name__icontains=q)[:20]
         results = []
         for tag in tags:
-            tag_json = {}
+            tag_json = dict()
             tag_json['id'] = tag.id
             tag_json['label'] = tag.name
             tag_json['value'] = tag.name
             results.append(tag_json)
         #Check authorization when not tag match to query for inform user about his permission on tags creation
         if not results:
-            #TODO: Change is_anonymous to right permission checking when auth system will be in place
-            if (request.user.is_anonymous()):
-                tag_json = {}
+            logger.info("User authentication: " + str(request.user.is_anonymous()))
+            if request.user.is_anonymous() or not request.user.has_perm('taggit.add_tag'):
+                tag_json = dict()
                 tag_json['id'] = -1
-                tag_json['label'] = _("Your are not authorized to create tags")
+                tag_json['label'] = _("warning") #Use label as type toastr
                 tag_json['value'] = _("Your are not authorized to create tags")
-                results.append(tag_json)
+            elif request.user.has_perm('taggit.add_tag'):
+                tag_json = dict()
+                tag_json['id'] = -2
+                tag_json['label'] = _("info") #Use label as type toastr
+                tag_json['value'] = _("You get permission to create your own tags")
+
+
+            results.append(tag_json)
 
         data = json.dumps(results)
     else:

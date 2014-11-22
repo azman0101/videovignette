@@ -240,26 +240,26 @@
             }
 
             function responseTag(e, ui) {
-
-                if (ui.content[0].id == -1) {
+                if (ui.content[0].id < 0) {
 
                     toastr.options.timeOut = 1000;
                     toastr.options.fadeOut = 250;
                     toastr.options.fadeIn = 250;
 
                     toastr.options.positionClass = 'toast-bottom-left';
-                    toastr['info'](ui.content[0].value);
-
-                    ui.content.splice(0, 1)
-                } else {
-                    var $input = $('<button type="button" class="btn btn-primary" id="submitBtn" >{% trans "Create the tag" %}</button>')
-                    if ($('button#submitBtn').length == 0) {
-                        $input.appendTo($('.ui-widget#tags'))
-                        $('button#submitBtn').on('click', function(ev) {
-                            console.log("submitBtn clicked !!!")
-                        });
+                    toastr[ui.content[0].label](ui.content[0].value);
+                    if (ui.content[0].id == -2) {
+                        var $input = $('<button type="button" class="btn btn-primary" id="submitBtn" >{% trans "Create the tag" %}</button>')
+                        if ($('button#submitBtn').length == 0) {
+                            $input.appendTo($('.ui-widget#tags'))
+                            $('button#submitBtn').on('click', function(ev) {
+                                console.log("submitBtn clicked !!!")
+                            });
+                        }
                     }
+                    ui.content.splice(0, 1)
                 }
+
 
 
             }
