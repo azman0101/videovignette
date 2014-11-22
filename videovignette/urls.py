@@ -29,7 +29,7 @@ urlpatterns = patterns('',
     url(r'crop_selection', 'frontend.views.cropselection', name='crop_selection'),
     url(r'attach_tag', 'frontend.views.attach_tag', name='attach_tag'),
     url(r'^get_tags', 'frontend.views.get_tags', name='get_tags'),
-    url(r'^$', Home.as_view()),
+    url(r'^$', Home.as_view(), name='home'),
     url(r'^i18n/', include('django.conf.urls.i18n')),
     url(r'^admin/', include(admin.site.urls)),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

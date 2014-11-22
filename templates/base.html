@@ -77,7 +77,7 @@
     <div class="jumbotron">
         <div class="container">
             <ul class="nav nav-tabs" role="tablist" id="myTab">
-              <li class="active"><a href="#download" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
+              <li class="active"><a href="#download" id="downloadtab" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
               <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">{% trans "Videos" %}</a></li>
               <li class="disabled"><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">{% trans "Preview" %}</a></li>
             </ul>
@@ -239,6 +239,30 @@
 
             }
 
+            function responseTag(e, ui) {
+
+                if (ui.content[0].id == -1) {
+
+                    toastr.options.timeOut = 1000;
+                    toastr.options.fadeOut = 250;
+                    toastr.options.fadeIn = 250;
+
+                    toastr.options.positionClass = 'toast-bottom-left';
+                    toastr['info'](ui.content[0].value);
+
+                    ui.content.splice(0, 1)
+                } else {
+                    var $input = $('<button type="button" class="btn btn-primary" id="submitBtn" >{% trans "Create the tag" %}</button>')
+                    if ($('button#submitBtn').length == 0) {
+                        $input.appendTo($('.ui-widget#tags'))
+                        $('button#submitBtn').on('click', function(ev) {
+                            console.log("submitBtn clicked !!!")
+                        });
+                    }
+                }
+
+
+            }
 
             function addTag(e, ui) {
                 $.ajax({
@@ -261,7 +285,7 @@
                 if (ev.type == 'mouseenter') {
                     $(this).removeClass();
                     $(this).addClass("btn btn-danger");
-                    $(this).text('Ending tagging');
+                    $(this).text('{% trans "Ending tagging" %}');
                     $(this).unbind('click');
                     $(this).attr('id', 'selectionEndingTaggingBtn');
                     $(this).click(function(){
@@ -281,7 +305,7 @@
             function showCoords(c)
             {
                 var $input = $('<button type="button" id="selectionBtn" ' +
-                        'class="btn btn-primary" data-toggle="button" data-tagging-text="Add Tagging ?" data-content="' +
+                        'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
                         $('.modal-img').attr('src') + '"  aria-pressed="false" autocomplete="off">' +
                         '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
 
@@ -303,7 +327,8 @@
                                     position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
                                     source: "{% url 'get_tags' %}",
                                     minLength: 2,
-                                    select: addTag
+                                    select: addTag,
+                                    response: responseTag
                                 });
                                 $btn.toggleClass("btn-success")
                                 $("#selectionBtn").hover(toggleTaggingBtn)
@@ -361,8 +386,9 @@
                 });
             });
 
-            $('#listvideo').click(function(){
-                $.ajax({
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+              if (e.target.id == 'listvideo') {
+                  $.ajax({
                     url: "{% url 'video_list' %}",
                     type: "GET",
                     dataType: "html",
@@ -376,9 +402,21 @@
                         listener_videolisting();
                     }
                 });
-                if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+
+              }// newly activated tab
+
+              // be aware of collision between tab and tabcontent
+{#              if (e.target.id == 'downloadtab') {#}
+{#                  $('#myTab a[href="#download"]').tab('show');#}
+{#              }#}
+              // destroy jscoll when we leave preview tab
+              if (e.relatedTarget.id == 'previewtab') {
+              // previous active tab
+                  if (typeof $('#show_videopreview').jscroll.destroy == "function") {
                     $('#show_videopreview').removeData('jscroll').jscroll.destroy()
-                }
+                  }
+              }
+
             });
 
 

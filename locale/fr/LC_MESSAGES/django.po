@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-21 16:38+0000\n"
+"POT-Creation-Date: 2014-11-22 12:58+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -37,6 +37,14 @@ msgstr "Tag trop long !"
 msgid "Download your videos"
 msgstr "Telecharger vos videos"
 
+#: frontend/views.py:290
+msgid "Added"
+msgstr "Ajouté"
+
+#: frontend/views.py:314 frontend/views.py:315
+msgid "Your are not authorized to create tags"
+msgstr "Vous n'êtes pas authorisé à créer des tags"
+
 #: templates/base.html:44
 msgid "Home"
 msgstr "Accueil"
@@ -64,3 +72,15 @@ msgstr "Prévisualisation"
 #: templates/base.html:89
 msgid "Drop videos below and the system will upload and process them."
 msgstr "La zone ci-dessous vous permet de déposer une ou plusieurs vidéo à traiter."
+
+#: templates/base.html:257
+msgid "Create the tag"
+msgstr "Créer un tag"
+
+#: templates/base.html:290
+msgid "Ending tagging"
+msgstr "Terminer"
+
+#: templates/base.html:310
+msgid "Add Tagging ?"
+msgstr "Tagger ?"

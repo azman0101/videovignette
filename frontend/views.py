@@ -287,7 +287,8 @@ def attach_tag(request):
     toastr_json = {}
     toastr_json['type'] = 'success'
     toastr_json['css'] = 'toast-bottom-left'
-    toastr_json['msg'] = "Added"
+    toastr_json['msg'] = _("Added")
+
     data = json.dumps(toastr_json)
     mimetype = 'application/json'
     return HttpResponse(data, mimetype)
@@ -304,6 +305,16 @@ def get_tags(request):
             tag_json['label'] = tag.name
             tag_json['value'] = tag.name
             results.append(tag_json)
+        #Check authorization when not tag match to query for inform user about his permission on tags creation
+        if not results:
+            #TODO: Change is_anonymous to right permission checking when auth system will be in place
+            if (request.user.is_anonymous()):
+                tag_json = {}
+                tag_json['id'] = -1
+                tag_json['label'] = _("Your are not authorized to create tags")
+                tag_json['value'] = _("Your are not authorized to create tags")
+                results.append(tag_json)
+
         data = json.dumps(results)
     else:
         data = 'fail'
