@@ -79,7 +79,7 @@
             <ul class="nav nav-tabs" role="tablist" id="myTab">
               <li class="active"><a href="#download" id="downloadtab" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
               <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">{% trans "Videos" %}</a></li>
-              <li class="disabled"><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">{% trans "Preview" %}</a></li>
+              <li class="disabled"><a href="#preview_tab" role="tab" id="previewtab">{% trans "Preview" %}</a></li>
             </ul>
 
             <div class="tab-content">
@@ -156,8 +156,7 @@
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
-                $('.dropdown-toggle').dropdown()
-
+                $('.dropdown-toggle').dropdown();
             })
 
         // Create an observer instance
@@ -253,11 +252,29 @@
                         if ($('button#submitBtn').length == 0) {
                             $input.appendTo($('.ui-widget#tags'))
                             $('button#submitBtn').on('click', function(ev) {
-                                console.log("submitBtn clicked !!!")
+                                $.ajax({
+                                    type: "POST",
+                                    url: "{% url 'create_tag' %}",
+                                    data: { term: $("input#tags").val(), cropped_id: $('div#tags').data('cropped-id') }
+                                })
+                                        .done(function(response_message){
+                                            //TODO: Handle 403 permission denied
+                                            toastr.options.timeOut = 3000;
+                                            toastr.options.fadeOut = 250;
+                                            toastr.options.fadeIn = 250;
+
+                                            toastr.options.positionClass = response_message.css
+
+                                            toastr[response_message.type](response_message.msg);
+                                        });
                             });
                         }
                     }
                     ui.content.splice(0, 1)
+                } else {
+                    if ($('button#submitBtn').length > 0) {
+                        $('button#submitBtn').remove()
+                    }
                 }
 
 
@@ -286,6 +303,7 @@
                     $(this).removeClass();
                     $(this).addClass("btn btn-danger");
                     $(this).text('{% trans "Ending tagging" %}');
+                    //#Unbind crop POST button when it function if for Ending tagging.
                     $(this).unbind('click');
                     $(this).attr('id', 'selectionEndingTaggingBtn');
                     $(this).click(function(){
@@ -387,6 +405,11 @@
             });
 
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+              if (e.target.id == 'previewtab') {
+                  var parent = $('#previewtab').parent()
+
+
+              }
               if (e.target.id == 'listvideo') {
                   $.ajax({
                     url: "{% url 'video_list' %}",

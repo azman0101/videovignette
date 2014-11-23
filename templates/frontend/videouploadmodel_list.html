@@ -1,11 +1,37 @@
-<ul>
+
 {% load static from staticfiles %}
+{% load i18n %}
+ <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 
 {% for video in object_list %}
     {%  if video.ready %}
-        <li><a href="#{{ video.processed_folder }}" class="videolisting" >{{ video.filename|lower }}</a>  - <a href="/archive/{{ video.processed_folder }}/" ><img height="48px" src="{% static 'img/archive.png' %}" /></a> - {{ video.size|filesizeformat }}</li>
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="heading{{ video.id }}">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ video.id }}" aria-expanded="true" aria-controls="collapse{{ video.id }}" class="collapsed">
+            {% trans "See cropped parts" %}<a href="#{{ video.processed_folder }}" class="videolisting" >
+                {{ video.filename|lower }}
+            </a> - <a href="/archive/{{ video.processed_folder }}/" >
+                    <img height="48px" src="{% static 'img/archive.png' %}" />
+                </a> - {{ video.size|filesizeformat }}
+        </a>
+      </h4>
+    </div>
+    <div id="collapse{{ video.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ video.id }}">
+      <div class="panel-body">
+                      cropped_frames_video: {{ cropped_frames_video }}
+                    {% if cropped_frames_video.id == video.id %}
+                        <div>
+                        {% for frame in cropped_frames_video.frame_list %}
+                            <img src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/>
+                        {% endfor %}
+                        </div>
+                    {% endif %}
+      </div>
+    </div>
+  </div>
     {% endif %}
 {% empty %}
     <li>No video yet.</li>
 {% endfor %}
-</ul>
+</div>

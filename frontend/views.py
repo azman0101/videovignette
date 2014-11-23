@@ -4,6 +4,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, Http404, HttpResponseBadRequest
 from django.views.generic import ListView
+from django.contrib.auth.decorators import permission_required
+
 from datetime import timedelta
 from PIL import Image
 import re
@@ -56,7 +58,10 @@ class VideoListView(ListView):
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
         # context['url_to_processed_folder'] = self.video
-        logger.warning("VIDEOLISTVIEW: " + str(context))
+        cropped_frames_video = dict()
+        for video in self.object_list:
+            cropped_frames_video[str(video.pk)] = CroppedFrame.objects.filter(video_upload_file=video)
+        context['cropped_frames_video'] = cropped_frames_video
         return context
 
         #def get_queryset(self):
@@ -276,19 +281,64 @@ class VideoPreview(generic.TemplateView):
         return context
 
 @require_POST
+@permission_required('taggit.add_tag')
+@csrf_exempt
+def create_tag(request):
+    tag_dict = request.POST.dict()
+    tags = Tag.objects.filter(name=tag_dict['term'])
+    if tags.exists():
+        # #There is only one result in tags because pk is unique
+        # tag = tags[0]
+        # #Get CroppedFrame to tag (give by data-cropped-id in <div class="ui-widget" id="tags" data-cropped-id="8">
+        # cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
+        #
+        # cropped_frame.tags.add(tag)
+        # cropped_frame.full_clean()
+        # cropped_frame.save()
+        toastr_json = dict()
+        toastr_json['type'] = 'info'
+        toastr_json['css'] = 'toast-bottom-left'
+        toastr_json['msg'] = _("Tag already exists, just select it by the list")
+    else:
+        newtag = Tag(name=tag_dict['term'])
+        newtag.save()
+        toastr_json = dict()
+        toastr_json['type'] = 'warning'
+        toastr_json['css'] = 'toast-bottom-left'
+        toastr_json['msg'] = _("%s created but not attached, re-search it by the list for attaching it"
+                               % newtag.name)
+    data = json.dumps(toastr_json)
+    mimetype = 'application/json'
+    return HttpResponse(data, mimetype)
+
+@require_POST
 @csrf_exempt
 def attach_tag(request):
     tag_dict = request.POST.dict()
-    tag = Tag.objects.get(pk=tag_dict['id'])
-    cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
-    cropped_frame.tags.add(tag)
-    cropped_frame.full_clean()
-    cropped_frame.save()
-    toastr_json = {}
-    toastr_json['type'] = 'success'
-    toastr_json['css'] = 'toast-bottom-left'
-    toastr_json['msg'] = _("Added")
-
+    tags = Tag.objects.filter(pk=tag_dict['id'])
+    if tags.exists():
+        #There is only one result in tags because pk is unique
+        tag = tags[0]
+        #Get CroppedFrame to tag (give by data-cropped-id in <div class="ui-widget" id="tags" data-cropped-id="8">
+        cropped_frame = CroppedFrame.objects.get(pk=tag_dict['cropped_id'])
+        if cropped_frame.tags.filter(name=tag).exists():
+            toastr_json = dict()
+            toastr_json['type'] = 'error'
+            toastr_json['css'] = 'toast-bottom-left'
+            toastr_json['msg'] = _("%s tag already attached" % tag)
+        else:
+            cropped_frame.tags.add(tag)
+            cropped_frame.full_clean()
+            cropped_frame.save()
+            toastr_json = dict()
+            toastr_json['type'] = 'success'
+            toastr_json['css'] = 'toast-bottom-left'
+            toastr_json['msg'] = _("%s tag added" % tag)
+    else:
+        toastr_json = dict()
+        toastr_json['type'] = 'warning'
+        toastr_json['css'] = 'toast-bottom-left'
+        toastr_json['msg'] = _("No tag attached")
     data = json.dumps(toastr_json)
     mimetype = 'application/json'
     return HttpResponse(data, mimetype)
@@ -306,6 +356,7 @@ def get_tags(request):
             tag_json['value'] = tag.name
             results.append(tag_json)
         #Check authorization when not tag match to query for inform user about his permission on tags creation
+        #This part is just a mean for send permission info to user interface
         if not results:
             logger.info("User authentication: " + str(request.user.is_anonymous()))
             if request.user.is_anonymous() or not request.user.has_perm('taggit.add_tag'):
@@ -318,7 +369,6 @@ def get_tags(request):
                 tag_json['id'] = -2
                 tag_json['label'] = _("info") #Use label as type toastr
                 tag_json['value'] = _("You get permission to create your own tags")
-
 
             results.append(tag_json)
 
