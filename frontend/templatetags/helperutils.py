@@ -1,8 +1,11 @@
 from django import template
+from django.conf import settings
 import logging
 from time import gmtime, strftime
-from datetime import timedelta
+from datetime import timedelta, datetime
 from math import modf
+from PIL import Image
+import os
 
 logger = logging.getLogger('videovignette')
 logger.setLevel('WARNING')
@@ -25,3 +28,12 @@ def global_duration(term, *args, **kwargs):
     logger.warning("global_duration: " + str(hours) + ' - ' + str(minutes) + ' - ' + str(seconds) + ' - ' + str(microseconds))
     logger.warning("global_duration: " + str(td))
     return str(td).strip('0')
+
+@register.filter()
+def getimgsize(term):
+    #Fix path to the file
+    path = os.path.dirname(settings.MEDIA_ROOT.rstrip('/')) + term
+    if not os.path.isfile(path):
+        return '100%', '100%'
+    im = Image.open(path)
+    return im.size # (width,height) tuple

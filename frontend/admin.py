@@ -36,7 +36,7 @@ class CroppedFrameAdmin(admin.ModelAdmin):
 
     form = CroppedFrameForm
     #filter_horizontal = ("languages",)
-    list_display = ('video_upload_file', 'frame_number', 'get_cropped_frame_file', 'get_tags',)
+    list_display = ('created_at', 'video_upload_file', 'frame_number', 'get_cropped_frame_file', 'get_tags',)
 
     #exclude = ('languages',)
 

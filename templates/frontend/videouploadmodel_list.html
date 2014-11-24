@@ -1,8 +1,7 @@
-
 {% load static from staticfiles %}
 {% load i18n %}
+{% load helperutils %}
  <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
-
 {% for video in object_list %}
     {%  if video.ready %}
   <div class="panel panel-default">
@@ -19,14 +18,16 @@
     </div>
     <div id="collapse{{ video.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ video.id }}">
       <div class="panel-body">
-                      cropped_frames_video: {{ cropped_frames_video }}
-                    {% if cropped_frames_video.id == video.id %}
-                        <div>
-                        {% for frame in cropped_frames_video.frame_list %}
-                            <img src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/>
-                        {% endfor %}
-                        </div>
-                    {% endif %}
+                <div id="container{{ video.id }}" >
+                    {% for id, frame_list in cropped_frames_video.items %}
+                        {% ifequal id|add:'0' video.id|add:'0' %}
+                            {% for frame in frame_list %}
+                             <div class='item'><img class='img-thumbnail' src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/></div>
+                            {% endfor %}
+
+                        {% endifequal %}
+                    {% endfor %}
+                </div>
       </div>
     </div>
   </div>
@@ -35,3 +36,4 @@
     <li>No video yet.</li>
 {% endfor %}
 </div>
+

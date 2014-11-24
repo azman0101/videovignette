@@ -32,7 +32,7 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
+      <div class="container-fluid">
          {% bootstrap_messages %}
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -75,7 +75,7 @@
 
     <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="jumbotron">
-        <div class="container">
+        <div class="container-fluid">
             <ul class="nav nav-tabs" role="tablist" id="myTab">
               <li class="active"><a href="#download" id="downloadtab" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
               <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">{% trans "Videos" %}</a></li>
@@ -84,7 +84,7 @@
 
             <div class="tab-content">
               <div class="tab-pane active" id="download">
-                      <div class="container">
+                      <div class="container-fluid">
                         <h1>{% trans "Download your videos" %}</h1>
                         <p>{% trans "Drop videos below and the system will upload and process them." %}</p>
                         {% load jfutags %}
@@ -92,9 +92,9 @@
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
                       </div>
               </div>
-              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">Loading....</div></div>
+              <div class="tab-pane" id="list_video"><div class="container-fluid" id="show_videolist">Loading....</div></div>
               <div class="tab-pane" id="preview_tab">
-                <div class="container">
+                <div class="container-fluid">
                   <p>
                     <label for="amount">Frame range:</label>
                     <input type="text" id="amount" readonly style="border:0; color:#f6931f; font-weight:bold;">
@@ -110,8 +110,8 @@
 
 <!-- Modal -->
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
+  <div class="modal-dialog" style="width: auto; height: auto;">
+    <div class="modal-content" style="width: auto; height: auto;">
 
     </div>
   </div>
@@ -151,13 +151,15 @@
         <script src="{% static 'js/vendor/URI.js' %}"></script>
         <script src="{% static 'js/vendor/jquery.Jcrop.min.js' %}"></script>
         <script src="{% static 'js/toastr.min.js' %}"></script>
+        <script src="{% static 'js/vendor/masonry.pkgd.min.js' %}"></script>
+        <script src="{% static 'js/vendor/imagesloaded.pkgd.min.js' %}"></script>
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
                 $('#myTab a:first').tab('show');
                 $('.dropdown-toggle').dropdown();
-            })
+            });
 
         // Create an observer instance
 {% comment %}
@@ -323,11 +325,12 @@
             function showCoords(c)
             {
                 var $input = $('<button type="button" id="selectionBtn" ' +
-                        'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
-                        $('.modal-img').attr('src') + '"  aria-pressed="false" autocomplete="off">' +
-                        '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
+                'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
+                $('.modal-img').attr('src') + '" data-imgheight="' + $('.modal-img').data('imgheight') + '" data-imgwidth="' +
+                $('.modal-img').data('imgwidth') + '" aria-pressed="false" autocomplete="off">' +
+                '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
 
-                $input.appendTo($('.modal-dialog'));
+                $input.appendTo($('.modal-content'));
                 $('#selectionBtn').on('click', function(){
                     var $btn = $(this).button('tagging');
                     var image = $(this).data('content');
@@ -340,7 +343,7 @@
                     })
                             .done(function(cropped_id) {
                                 var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
-                                $tags.appendTo($('.modal-dialog'));
+                                $tags.appendTo($('.modal-content'));
                                 $("input#tags").autocomplete({
                                     position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
                                     source: "{% url 'get_tags' %}",
@@ -366,9 +369,9 @@
             $('#myModal').on('show.bs.modal', function (event) {
                 var button = $(event.relatedTarget); // Button that triggered the modal
                 var image = button.data('content'); // Extract info from data-* attributes
-                var contentHeight = $(window).height() - 60;
+                var contentHeight = $(window).height() - 110;
 
-                $(this).find('.modal-content').css({
+                {% comment %}$(this).find('.modal-content').css({
                     'max-height': function () {
                         return contentHeight;
                     }
@@ -379,9 +382,9 @@
                     'max-height': function () {
                         return contentHeight;
                     }
-                });
+                });{% endcomment %}
 
-                $(this).find('.modal-dialog').css({
+                $(this).find('.modal-content').css({
                     'margin-top': function () {
                         return -($(this).outerHeight() / 5);
                     },
@@ -390,18 +393,22 @@
                     }
                 });
                 var modal = $(this);
-                //modal.find('.modal-title').append('<img src=' + image + '/>')
-                modal.find('.modal-content').replaceWith('<img class="modal-img" src=' + image + '/>');
-                $(this).find('.modal-img').css({
+                modal.find('.modal-content').append('<img class="modal-img" src=' + image + '/>');
+{% comment %}                $(this).find('.modal-img').css({
                     'max-height': function () {
                         return contentHeight;
                     }
-                });
+                });{% endcomment %}
                 $('.modal-img').Jcrop({
-                    boxHeight: contentHeight,
+                    boxHeight: '80%',
                     onRelease: releaseSelection,
-                    onSelect: showCoords
+                    onSelect: showCoords,
+                    keySupport: false
                 });
+            });
+
+            $('#myModal').on('hide.bs.modal', function (event) {
+                $('.modal-content').empty();
             });
 
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
@@ -417,12 +424,27 @@
                     dataType: "html",
                     success: function (data) {
                         $('div[id="show_videolist"]').html(data);
+
                     },
                     error: function (xhr, status) {
                         alert("Sorry, there was a problem!");
                     },
                     complete: function (xhr, status) {
+
+                        var $child = $('.panel-body').children('div');
+                        $.each($child, function(key, entry) {
+                            // initialize Masonry after all images have loaded
+                            $(entry).imagesLoaded(function(){
+                              $(entry).masonry({
+
+                                  itemSelector: '.item'
+                                });
+                            });
+                        });
+
                         listener_videolisting();
+                        $('.collapse').collapse('show')
+
                     }
                 });
 

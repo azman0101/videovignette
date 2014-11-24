@@ -2,6 +2,7 @@ from django.db import models
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from django.utils.translation import ugettext as _
+from datetime import datetime
 
 import logging
 
@@ -10,12 +11,14 @@ logger = logging.getLogger('videovignette')
 logger.setLevel('ERROR')
 
 class VideoUploadModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, default=datetime.now)
     video_file = models.FileField()
     filename = models.CharField(max_length=100)
     size = models.IntegerField()
     frame_per_second = models.FloatField(verbose_name=_('FPS'), null=True)
     duration = models.FloatField(verbose_name=_('Duration'), null=True)
-
+    height = models.IntegerField(verbose_name=_('Height in px'), null=True)
+    width = models.IntegerField(verbose_name=_('Width in px'), null=True)
     #TODO: Think to saved it as UUID4
     processed_folder = models.CharField(max_length=50)
 
@@ -48,6 +51,7 @@ class Box(models.Model):
         return self.x, self.y, self.x2, self.y2
 
 class CroppedFrame(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True, default=datetime.now, editable=True)
     video_upload_file = models.ForeignKey(VideoUploadModel, null=True)
     frame_number = models.IntegerField(verbose_name=_("Number of cropped frame"))
     box = models.ForeignKey(Box, null=True)

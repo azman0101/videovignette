@@ -55,6 +55,10 @@ class Home(generic.TemplateView):
 class VideoListView(ListView):
     model = VideoUploadModel
 
+    def get(self, request, *args, **kwargs):
+        return super(VideoListView, self).get(request, *args, **kwargs)
+
+
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
         # context['url_to_processed_folder'] = self.video
@@ -125,7 +129,10 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     output, err = process.communicate()
     #TODO: evaluate computation time of FFMPEG for wait timeout.
     process.wait()
-
+    if prefix == 'full_':
+        width, height = getimgsize(abs_pathname + '/' + prefix + 'output_00001.jpg')
+        file_instance.width = width
+        file_instance.height = height
     #Parse fps and total duration from output
     info_ffmpeg = ffmpeg_info(output, err)
     tm = timedelta(hours=info_ffmpeg['hours'], minutes=info_ffmpeg['minutes'],
@@ -280,6 +287,11 @@ class VideoPreview(generic.TemplateView):
         context['fps'] = self.fps
         return context
 
+
+def getimgsize(path):
+    im = Image.open(path)
+    return im.size
+
 @require_POST
 @permission_required('taggit.add_tag')
 @csrf_exempt
@@ -408,7 +420,7 @@ def cropselection(request):
         box.save()
         cropped_img = im.crop(box.tuple_box())
         in_memory_temp = StringIO.StringIO()
-        cropped_img.save(in_memory_temp, "JPEG")
+        cropped_img.save(in_memory_temp, "JPEG", quality=90)
         in_memory_temp.seek(0)
         file_cropped_img = SimpleUploadedFile(folder + '_' + str(uuid.uuid4()) + '_' + str(image_number.group(1)) + '.jpeg',
                                               in_memory_temp.read(), content_type='image/jpeg')
