@@ -29,11 +29,11 @@ def global_duration(term, *args, **kwargs):
     logger.warning("global_duration: " + str(td))
     return str(td).strip('0')
 
-@register.filter()
-def getimgsize(term):
-    #Fix path to the file
-    path = os.path.dirname(settings.MEDIA_ROOT.rstrip('/')) + term
-    if not os.path.isfile(path):
-        return '100%', '100%'
-    im = Image.open(path)
-    return im.size # (width,height) tuple
+# @register.filter()
+# def getimgsize(term):
+#     #Fix path to the file
+#     path = os.path.dirname(settings.MEDIA_ROOT.rstrip('/')) + term
+#     if not os.path.isfile(path):
+#         return '100%', '100%'
+#     im = Image.open(path)
+#     return im.size # (width,height) tuple

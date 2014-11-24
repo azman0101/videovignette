@@ -326,8 +326,7 @@
             {
                 var $input = $('<button type="button" id="selectionBtn" ' +
                 'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
-                $('.modal-img').attr('src') + '" data-imgheight="' + $('.modal-img').data('imgheight') + '" data-imgwidth="' +
-                $('.modal-img').data('imgwidth') + '" aria-pressed="false" autocomplete="off">' +
+                $('.modal-img').attr('src') + '" aria-pressed="false" autocomplete="off">' +
                 '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
 
                 $input.appendTo($('.modal-content'));
@@ -370,6 +369,12 @@
                 var button = $(event.relatedTarget); // Button that triggered the modal
                 var image = button.data('content'); // Extract info from data-* attributes
                 var contentHeight = $(window).height() - 110;
+                var imgwidth = $('img.preview').data('imgwidth');
+                var imgheight = $('img.preview').data('imgheight');
+                if (imgheight > contentHeight) {
+                    newwidth = (imgwidth * contentHeight) / imgheight;
+                    newheight = contentHeight
+                }
 
                 {% comment %}$(this).find('.modal-content').css({
                     'max-height': function () {
@@ -399,12 +404,17 @@
                         return contentHeight;
                     }
                 });{% endcomment %}
+
+                $('.modal-img').attr('width', newwidth);
+                $('.modal-img').attr('height', newheight);
                 $('.modal-img').Jcrop({
-                    boxHeight: '80%',
+                    //boxHeight: '80%',
+                    trueSize: [imgwidth, imgheight],
                     onRelease: releaseSelection,
                     onSelect: showCoords,
                     keySupport: false
                 });
+
             });
 
             $('#myModal').on('hide.bs.modal', function (event) {

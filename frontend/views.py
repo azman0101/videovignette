@@ -223,7 +223,10 @@ def upload_delete(request, pk):
     success = True
     try:
         instance = VideoUploadModel.objects.get(pk=pk)
-        os.unlink(instance.video_file.path)
+        try:
+            os.unlink(instance.video_file.path)
+        except Exception as e:
+            logger.warning("FILE IS NOT DELETED!!!!!!!!!!!!!!!!!!" + str(e))
         time.sleep(1)
         if os.path.isfile(instance.video_file.path):
             raise Exception('File is not deleted')
@@ -252,6 +255,8 @@ class VideoPreview(generic.TemplateView):
         self.fps = video_instance.frame_per_second
         self.duration = video_instance.duration
         self.max_count = video_instance.generated_images_count
+        self.height = video_instance.height
+        self.width = video_instance.width
         return super(VideoPreview, self).get(request, *args, **kwargs)
 
 
@@ -273,7 +278,7 @@ class VideoPreview(generic.TemplateView):
             full = settings.MEDIA_URL + self.folder + '/full_output_%05d.jpg' % number
             file_listing.append((full, low))
             
-        # TODO: Present as dictionary
+        # TODO: Present this as dictionary
         context['file_listing'] = file_listing
         context['folder'] = self.folder
         context['max'] = self.max_count
@@ -285,6 +290,8 @@ class VideoPreview(generic.TemplateView):
         context['fastforward'] = self.fastforward
         context['duration'] = self.duration
         context['fps'] = self.fps
+        context['height'] = self.height
+        context['width'] = self.width
         return context
 
 
