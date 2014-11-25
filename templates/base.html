@@ -450,10 +450,16 @@
                 });
             }
 
-            $('#fileupload').bind('fileuploadprogress', function (e, data) {
-                setInterval(get_progress, 1);
+            var fileuploadprogress_interval;
+
+            $('#fileupload').bind('fileuploadstart', function (e, data) {
+                fileuploadprogress_interval = setInterval(get_progress, 5);
 
             });
+
+{#            $('#fileupload').bind('fileuploadstop', function (e, data) {#}
+{#                clearInterval(fileuploadprogress_interval);#}
+{#            });#}
 
             $('#myModal').on('hide.bs.modal', function (event) {
                 $('.modal-content').empty();

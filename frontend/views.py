@@ -189,6 +189,7 @@ def get_or_create_dir():
 def get_progress(request):
     data = dict()
     data['progress'] = str(len(log))
+    data = json.dumps(data)
     mimetype = 'application/json'
     return HttpResponse(data, mimetype)
 
@@ -233,17 +234,17 @@ def upload(request):
     results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname,
                                                folder_name))
                for configuration_name in configuration_to_apply]
-    for result in results:
-        try:
-
-            output, err = result.get()
-            #logger.info(output)
-            #logger.error(err)
-        except OSError as e:
-            # TODO: Handle this error by sending a message to interface.
-            # TODO: Retry process with another decoding app (ffmpeg or avconv)
-            logger.error("Error: FFMPEG" + str(e))
-            return HttpResponseServerError(content='FFMPEG Error ' + str(e))
+    # for result in results:
+    #     try:
+    #
+    #         output, err = result.get()
+    #         #logger.info(output)
+    #         #logger.error(err)
+    #     except OSError as e:
+    #         # TODO: Handle this error by sending a message to interface.
+    #         # TODO: Retry process with another decoding app (ffmpeg or avconv)
+    #         logger.error("Error: FFMPEG" + str(e))
+    #         return HttpResponseServerError(content='FFMPEG Error ' + str(e))
 
     return UploadResponse(request, file_dict)
 
