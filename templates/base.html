@@ -110,8 +110,8 @@
 
 <!-- Modal -->
 <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-  <div class="modal-dialog" style="width: auto; height: auto;">
-    <div class="modal-content" style="width: auto; height: auto;">
+  <div class="modal-dialog" >
+    <div class="modal-content" >
 
     </div>
   </div>
@@ -376,20 +376,34 @@
                     newheight = contentHeight
                 }
 
-                {% comment %}$(this).find('.modal-content').css({
+                $(this).find('.modal-content').css({
                     'max-height': function () {
-                        return contentHeight;
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
                     }
                 });
 
-
                 $(this).find('.modal-body').css({
                     'max-height': function () {
-                        return contentHeight;
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
                     }
-                });{% endcomment %}
+                });
 
-                $(this).find('.modal-content').css({
+                $(this).find('.modal-dialog').css({
+                    'max-height': function () {
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
+                    }
+                });
+
+                $(this).find('.modal-dialog').css({
                     'margin-top': function () {
                         return -($(this).outerHeight() / 5);
                     },
@@ -399,7 +413,7 @@
                 });
                 var modal = $(this);
                 modal.find('.modal-content').append('<img class="modal-img" src=' + image + '/>');
-{% comment %}                $(this).find('.modal-img').css({
+                {% comment %}$(this).find('.modal-img').css({
                     'max-height': function () {
                         return contentHeight;
                     }
@@ -408,12 +422,36 @@
                 $('.modal-img').attr('width', newwidth);
                 $('.modal-img').attr('height', newheight);
                 $('.modal-img').Jcrop({
-                    //boxHeight: '80%',
+                    boxHeight: newheight,
+                    boxWidth: newwidth,
                     trueSize: [imgwidth, imgheight],
                     onRelease: releaseSelection,
                     onSelect: showCoords,
                     keySupport: false
                 });
+
+            });
+
+            function get_progress() {
+                $.ajax({
+                    url: "{% url 'get_progress' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        console.log(data);
+                    },
+                    error: function (xhr, status) {
+                        alert("Sorry, there was a problem PROGRESS!");
+                    },
+                    complete: function (xhr, status) {
+
+                        console.log(status);
+                    }
+                });
+            }
+
+            $('#fileupload').bind('fileuploadprogress', function (e, data) {
+                setInterval(get_progress, 1);
 
             });
 

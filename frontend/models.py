@@ -76,4 +76,4 @@ class CroppedFrame(models.Model):
 class ApplicationSetting(models.Model):
     configuration_name = models.CharField(max_length=100, default='low_res')
     resize_ffmpeg_parameter = models.CharField(max_length=100, default='-vf scale=320:-1', null=True)
-    captured_frame_parameter = models.CharField(max_length=100, null=True)
+    #captured_frame_parameter = models.CharField(max_length=100, null=True)

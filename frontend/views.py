@@ -2,7 +2,7 @@
 
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseBadRequest
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
 from django.views.generic import ListView
 from django.contrib.auth.decorators import permission_required
 
@@ -23,9 +23,14 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST, require_GET
 from jfu.http import upload_receive, UploadResponse, JFUResponse
 import subprocess
+
 import uuid
 import time
-from multiprocessing import Pool
+from multiprocessing import Pool, Manager
+
+manager = Manager()
+log = manager.list()
+
 import logging
 
 
@@ -33,7 +38,6 @@ logger = logging.getLogger('videovignette')
 logger.setLevel('ERROR')
 
 from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, Box
-
 
 class Home(generic.TemplateView):
     template_name = 'base.html'
@@ -77,7 +81,7 @@ def ffmpeg_info(output, err):
     filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})",
                    'fps': "(Stream #\d.\d.*?: Video:\s?).*?([0-9]+.?[0-9]+)\s?fps"}
 
-    if output == '':
+    if output == '' or output is None:
         output = err
     # Split in lines
     data = {}
@@ -122,21 +126,39 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
     bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter +\
-                   ' -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
+                   '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
-    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    output, err = process.communicate()
-    #TODO: evaluate computation time of FFMPEG for wait timeout.
+    process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, close_fds=True)
+    output = []
+    while process.poll() is None:
+        if process.stdout is not None:
+            err = str(process.stderr.readline())
+            if 'showinfo' not in err:
+                output.append(err)
+            else:
+                log.append(err)
+            # sys.stdout.write("FFMPEG ER: " + err)
+            # sys.stdout.flush()
+
     process.wait()
+    err = ''
+    output = '\n'.join(output)
+    #TODO: evaluate computation time of FFMPEG for wait timeout.
+    # logger.error(str(output))
+    # logger.error(str(err))
     if prefix == 'full_':
         width, height = getimgsize(abs_pathname + '/' + prefix + 'output_00001.jpg')
         file_instance.width = width
         file_instance.height = height
     #Parse fps and total duration from output
     info_ffmpeg = ffmpeg_info(output, err)
-    tm = timedelta(hours=info_ffmpeg['hours'], minutes=info_ffmpeg['minutes'],
+    try:
+        tm = timedelta(hours=info_ffmpeg['hours'], minutes=info_ffmpeg['minutes'],
                                        seconds=info_ffmpeg['seconds'], microseconds=info_ffmpeg['microseconds'])
+    except KeyError as e:
+        logger.error("Can't get info ffmpeg" + str(e))
+
     logger.warning('Float seconds: ' + str(tm.total_seconds()))
     file_instance.duration = tm.total_seconds()
     file_instance.frame_per_second = info_ffmpeg['fps']
@@ -155,7 +177,6 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     file_instance.save()
     return output, err
 
-
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
     seq_path = settings.MEDIA_ROOT + folder_name
@@ -163,6 +184,13 @@ def get_or_create_dir():
         os.makedirs(seq_path)
     return seq_path, folder_name
 
+
+@require_GET
+def get_progress(request):
+    data = dict()
+    data['progress'] = str(len(log))
+    mimetype = 'application/json'
+    return HttpResponse(data, mimetype)
 
 @require_POST
 def upload(request):
@@ -207,13 +235,15 @@ def upload(request):
                for configuration_name in configuration_to_apply]
     for result in results:
         try:
+
             output, err = result.get()
-            logger.info(output)
-            logger.error(err)
+            #logger.info(output)
+            #logger.error(err)
         except OSError as e:
             # TODO: Handle this error by sending a message to interface.
             # TODO: Retry process with another decoding app (ffmpeg or avconv)
             logger.error("Error: FFMPEG" + str(e))
+            return HttpResponseServerError(content='FFMPEG Error ' + str(e))
 
     return UploadResponse(request, file_dict)
 
@@ -427,7 +457,7 @@ def cropselection(request):
         box.save()
         cropped_img = im.crop(box.tuple_box())
         in_memory_temp = StringIO.StringIO()
-        cropped_img.save(in_memory_temp, "JPEG", quality=90)
+        cropped_img.save(in_memory_temp, "JPEG", quality=100)
         in_memory_temp.seek(0)
         file_cropped_img = SimpleUploadedFile(folder + '_' + str(uuid.uuid4()) + '_' + str(image_number.group(1)) + '.jpeg',
                                               in_memory_temp.read(), content_type='image/jpeg')
