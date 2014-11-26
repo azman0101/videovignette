@@ -83,6 +83,7 @@ def ffmpeg_info(output, err):
             data[key] = value.group(2)
             if key == 'duration':
                 parse_time = re.search(r'(\d{2}):([0-5][0-9]):([0-5][0-9])\.(\d{1,3})', data[key])
+                #TODO: Handle error when parse_time is not
                 data['hours'] = int(parse_time.group(1))
                 data['minutes'] = int(parse_time.group(2))
                 data['seconds'] = int(parse_time.group(3))
@@ -149,6 +150,8 @@ def start_ffmpeg(param):
 
                 #Regex for match on hex showinfo identifier and n which is probable the frame count
                 current_frame = re.search(r'\[Parsed_showinfo_\d\s?@\s?(0x[0-9a-f]+)\]\s?n:(\d+)\w?', err)
+
+                logger.warning("CURRENT_FRAME_REGEX: " + str(type(current_frame)))
                 task_ffmpeg = current_frame.group(1)
                 #logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
                 #Push each value in the line containing showinfo and matching to regex
