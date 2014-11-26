@@ -102,10 +102,12 @@ WSGI_APPLICATION = 'videovignette.wsgi.application'
 
 
 if OS == 'Linux':
-    DEMUXER = 'avconv'
+    DEMUXER = 'ffmpeg'
 elif OS == 'Darwin':
     DEMUXER = '/opt/local/bin/ffmpeg'    
 
+BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases

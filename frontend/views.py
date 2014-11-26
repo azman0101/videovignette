@@ -27,9 +27,9 @@ import subprocess
 import uuid
 import time
 from multiprocessing import Pool, Manager
+import redis
 
-manager = Manager()
-log = manager.list()
+redis_db = redis.StrictRedis(host='localhost', port=6379, db=15)
 
 import logging
 
@@ -42,14 +42,6 @@ from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, 
 class Home(generic.TemplateView):
     template_name = 'base.html'
 
-    def get(self, request, *args, **kwargs):
-
-        logger.warning("request.LANGUAGE_CODE: " + str(request.LANGUAGE_CODE))
-        logger.warning("request.LANGUAGE_CODE: " + str(_("Download your videos")))
-
-        return super(Home, self).get(request, *args, **kwargs)
-
-
     def get_context_data(self, **kwargs):
         context = super(Home, self).get_context_data(**kwargs)
         context['accepted_mime_types'] = ['video/*']
@@ -61,7 +53,6 @@ class VideoListView(ListView):
 
     def get(self, request, *args, **kwargs):
         return super(VideoListView, self).get(request, *args, **kwargs)
-
 
     def get_context_data(self, **kwargs):
         context = super(VideoListView, self).get_context_data(**kwargs)
@@ -97,11 +88,22 @@ def ffmpeg_info(output, err):
                 data['seconds'] = int(parse_time.group(3))
                 data['microseconds'] = int(parse_time.group(4))
 
-            logger.warning("Info ffmpeg: " + str(data))
+    tm = timedelta(hours=data['hours'], minutes=data['minutes'],
+                   seconds=data['seconds'], microseconds=data['microseconds'])
+    data['timedelta'] = tm
+    logger.warning("TOTAL SECONDS: " + str(tm.total_seconds()))
+    logger.warning("FPS: " + str(float(data['fps'])))
+    data['frame_count'] = int(tm.total_seconds()*float(data['fps']))
     return data
 
 
-def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, folder_name):
+
+def start_ffmpeg(param):
+    filepath = param['filepath']
+    file_instance = param['file_instance']
+    configuration_name = param['configuration_name']
+    abs_pathname = param['abs_pathname']
+    folder_name = param['folder_name']
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
     except Http404 as e:
@@ -130,34 +132,52 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, close_fds=True)
-    output = []
+    header_output_ffmpeg = []
+    redis_db.rpush('pid', process.pid)
+    infoheader_passed = False
     while process.poll() is None:
         if process.stdout is not None:
             err = str(process.stderr.readline())
+            #While there is no 'showinfo' in the line, then, we are in the header
             if 'showinfo' not in err:
-                output.append(err)
-            else:
-                log.append(err)
+                header_output_ffmpeg.append(err)
+            if 'showinfo' in err:
+
+                #EXEMPLE: [Parsed_showinfo_0 @ 0x1c5c0a0] n:64 pts:66 pts_time:2.64 pos:522970 fmt:yuv420p sar:1/1
+                # s:1920x1072 i:P iskey:0 type:P checksum:BC04CF1A plane_checksum:[1ABBF73C 4E648C19 D8B04BB6]
+                # mean:[171 125 128 ] stdev:[66.1 9.6 11.5]
+
+                #Regex for match on hex showinfo identifier and n which is probable the frame count
+                current_frame = re.search(r'\[Parsed_showinfo_\d\s?@\s?(0x[0-9a-f]+)\]\s?n:(\d+)\w?', err)
+                task_ffmpeg = current_frame.group(1)
+                #logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
+                #Push each value in the line containing showinfo and matching to regex
+                redis_db.rpush(task_ffmpeg, current_frame.group(2))
+                if infoheader_passed is False: #  and not redis_db.exists('info_ffmpeg')
+                    info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '')
+                    redis_db.hmset('info_ffmpeg', info_ffmpeg)
+                    logger.warning("FRAMES COUNT: " + str(info_ffmpeg['frame_count']))
+                    infoheader_passed = True
             # sys.stdout.write("FFMPEG ER: " + err)
             # sys.stdout.flush()
 
     process.wait()
+    logger.warning("TASKS_PID JUST END: " + redis_db.lpop('pid'))
+    logger.warning("TASKS_PID LEN: " + str(redis_db.llen('pid')))
+
+    while redis_db.llen('pid') != 0:
+        time.sleep(1)
+
+    logger.warning("Let's flush db")
+    redis_db.flushdb()
+
     err = ''
-    output = '\n'.join(output)
-    #TODO: evaluate computation time of FFMPEG for wait timeout.
-    # logger.error(str(output))
-    # logger.error(str(err))
+    header_output_ffmpeg = '\n'.join(header_output_ffmpeg)
+    tm = info_ffmpeg['timedelta']
     if prefix == 'full_':
         width, height = getimgsize(abs_pathname + '/' + prefix + 'output_00001.jpg')
         file_instance.width = width
         file_instance.height = height
-    #Parse fps and total duration from output
-    info_ffmpeg = ffmpeg_info(output, err)
-    try:
-        tm = timedelta(hours=info_ffmpeg['hours'], minutes=info_ffmpeg['minutes'],
-                                       seconds=info_ffmpeg['seconds'], microseconds=info_ffmpeg['microseconds'])
-    except KeyError as e:
-        logger.error("Can't get info ffmpeg" + str(e))
 
     logger.warning('Float seconds: ' + str(tm.total_seconds()))
     file_instance.duration = tm.total_seconds()
@@ -171,11 +191,11 @@ def start_ffmpeg(filepath, file_instance, configuration_name, abs_pathname, fold
         path, dirs, files = os.walk(abs_pathname).next()
         #Count only the files with prefix
         files_count = len([f for f in files if f.startswith(prefix)])
-        logger.warning('LENGTH.. ' + str(files_count))
+        logger.warning('GENERATED FRAMES COUNT.. ' + str(files_count))
         file_instance.generated_images_count = files_count
     #Save instance for modification made on processed_folder and ready
     file_instance.save()
-    return output, err
+    return header_output_ffmpeg, err
 
 def get_or_create_dir():
     folder_name = str(uuid.uuid4())
@@ -184,11 +204,25 @@ def get_or_create_dir():
         os.makedirs(seq_path)
     return seq_path, folder_name
 
-
 @require_GET
 def get_progress(request):
     data = dict()
-    data['progress'] = str(len(log))
+    if redis_db.exists('info_ffmpeg'):
+        info_ffmpeg_redis = redis_db.hgetall('info_ffmpeg')
+        frame_count_redis = float(info_ffmpeg_redis['frame_count'])
+        keys = redis_db.keys(pattern='0x*')
+        count = 0.0
+        for key in keys:
+            count += float(redis_db.llen(key))
+        #Adjustment to stick to reality ;)
+        count = ((count/2.0+2)/frame_count_redis)*100.0
+        logger.warning("GETPROG %: " + str(count))
+        data['progress'] = str(int(count))
+        if count >= 100:
+            data['progress'] = '100'
+    else:
+        data['progress'] = '100'
+
     data = json.dumps(data)
     mimetype = 'application/json'
     return HttpResponse(data, mimetype)
@@ -231,9 +265,9 @@ def upload(request):
     pool = Pool()
     abs_pathname, folder_name = get_or_create_dir()
     configuration_to_apply = ['low_res', 'full_res']
-    results = [pool.apply_async(start_ffmpeg, (instance.video_file.path, instance, configuration_name, abs_pathname,
-                                               folder_name))
-               for configuration_name in configuration_to_apply]
+    results = pool.map(start_ffmpeg, [{'filepath': instance.video_file.path, 'file_instance': instance,
+                                       'configuration_name': configuration_name, 'abs_pathname': abs_pathname,
+                                       'folder_name': folder_name} for configuration_name in configuration_to_apply])
     # for result in results:
     #     try:
     #

@@ -431,17 +431,20 @@
                 });
 
             });
-
+            var fileuploadprogress_interval;
             function get_progress() {
                 $.ajax({
                     url: "{% url 'get_progress' %}",
                     type: "GET",
                     dataType: "json",
                     success: function (data) {
-                        console.log(data);
+                        $('#progressbareee').progressbar('value', data.progress);
+                        if (data.progress > 99.999) {
+                            clearInterval(fileuploadprogress_interval);
+                        }
                     },
                     error: function (xhr, status) {
-                        alert("Sorry, there was a problem PROGRESS!");
+                        console.log(status);
                     },
                     complete: function (xhr, status) {
 
@@ -450,11 +453,12 @@
                 });
             }
 
-            var fileuploadprogress_interval;
 
             $('#fileupload').bind('fileuploadstart', function (e, data) {
-                fileuploadprogress_interval = setInterval(get_progress, 5);
-
+                fileuploadprogress_interval = setInterval(get_progress, 1000);
+                var $progressbar = $('<div id="progressbareee"></div>');
+                $progressbar.appendTo($('div.container-fluid'));
+                $('#progressbareee').progressbar();
             });
 
 {#            $('#fileupload').bind('fileuploadstop', function (e, data) {#}
