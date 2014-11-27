@@ -23,6 +23,7 @@
         {# Load CSS and JavaScript #}
         <link rel="stylesheet" href="{% static 'css/toastr.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/wheelmenu.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <script src="{% static 'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
@@ -153,11 +154,17 @@
         <script src="{% static 'js/toastr.min.js' %}"></script>
         <script src="{% static 'js/vendor/masonry.pkgd.min.js' %}"></script>
         <script src="{% static 'js/vendor/imagesloaded.pkgd.min.js' %}"></script>
+        <script src="{% static 'js/jquery.wheelmenu.min.js' %}"></script>
+
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
-                $('#myTab a:first').tab('show');
+                if(window.location.hash == '#list_video') {
+                  $('#myTab a[href="#list_video"]').tab('show');
+                } else {
+                  $('#myTab a:first').tab('show');
+                }
                 $('.dropdown-toggle').dropdown();
             });
 
@@ -192,6 +199,10 @@
           //...
         });{% endcomment %}
 
+            function imageLoader() {
+                console.log('TODO: Image loading lazyly')
+            }
+
             function listener_videolisting() {
                 $('.videolisting').click(function(e){
                     var hash = this.hash.substring(1);
@@ -208,6 +219,7 @@
                             alert("Sorry, there was a problem!");
                         },
                         complete: function (xhr, status) {
+
                             console.log("COMPLETE: " + xhr);
                             var max = $('#nextlink').data('max');
                             $( "#slider-range" ).slider({
@@ -225,14 +237,18 @@
                                     $('#nextlink').attr('href', nt.toString());
                                     if (typeof $('#show_videopreview').jscroll.destroy == "function") {
                                         $('#show_videopreview').removeData('jscroll').jscroll.destroy()
-                                        $('#show_videopreview').jscroll();
+                                        $('#show_videopreview').jscroll({
+                                            callback: imageLoader
+                                        });
                                     }
 
                                 }
                             });
                             $( "#amount" ).val( $( "#slider-range" ).slider( "values", 0 ) +
                                     " - " + $( "#slider-range" ).slider( "values", 1 ) );
-                            $('#show_videopreview').jscroll();
+                            $('#show_videopreview').jscroll({
+                                callback: imageLoader
+                            });
 
                         }
                     });
@@ -327,36 +343,39 @@
                 var $input = $('<button type="button" id="selectionBtn" ' +
                 'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
                 $('.modal-img').attr('src') + '" aria-pressed="false" autocomplete="off">' +
-                '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> Star</button>');
+                '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> {% trans 'Save' %}</button>');
 
-                $input.appendTo($('.modal-content'));
-                $('#selectionBtn').on('click', function(){
-                    var $btn = $(this).button('tagging');
-                    var image = $(this).data('content');
+                if ($('button#selectionBtn').length == 0) {
+                    $input.appendTo($('.modal-content'));
 
-                    $.ajax({
-                        type: "POST",
-                        url: "{% url 'crop_selection' %}",
-                        data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
-                            x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
-                    })
-                            .done(function(cropped_id) {
-                                var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
-                                $tags.appendTo($('.modal-content'));
-                                $("input#tags").autocomplete({
-                                    position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
-                                    source: "{% url 'get_tags' %}",
-                                    minLength: 2,
-                                    select: addTag,
-                                    response: responseTag
+                    $('#selectionBtn').on('click', function(){
+                        var $btn = $(this).button('tagging');
+                        var image = $(this).data('content');
+
+                        $.ajax({
+                            type: "POST",
+                            url: "{% url 'crop_selection' %}",
+                            data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
+                                x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
+                        })
+                                .done(function(cropped_id) {
+                                    var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
+                                    $tags.appendTo($('.modal-content'));
+                                    $("input#tags").autocomplete({
+                                        position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
+                                        source: "{% url 'get_tags' %}",
+                                        minLength: 2,
+                                        select: addTag,
+                                        response: responseTag
+                                    });
+                                    $btn.toggleClass("btn-success");
+                                    $("#selectionBtn").hover(toggleTaggingBtn);
+                                    $('input#tags').focus();
+
                                 });
-                                $btn.toggleClass("btn-success")
-                                $("#selectionBtn").hover(toggleTaggingBtn)
-
-
-                            });
-                    //$btn.button('reset')
-                })
+                        //$btn.button('reset')
+                    });
+                }
             }
             function releaseSelection(c)
             {
@@ -470,55 +489,61 @@
             });
 
             $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
-              if (e.target.id == 'previewtab') {
-                  var parent = $('#previewtab').parent()
+                if (e.target.id == 'previewtab') {
+                    var parent = $('#previewtab').parent();
 
 
-              }
-              if (e.target.id == 'listvideo') {
-                  $.ajax({
-                    url: "{% url 'video_list' %}",
-                    type: "GET",
-                    dataType: "html",
-                    success: function (data) {
-                        $('div[id="show_videolist"]').html(data);
+                }
+                if (e.target.id == 'listvideo') {
+                    $.ajax({
+                        url: "{% url 'video_list' %}",
+                        type: "GET",
+                        dataType: "html",
+                        success: function (data) {
+                            $('div[id="show_videolist"]').html(data);
 
-                    },
-                    error: function (xhr, status) {
-                        alert("Sorry, there was a problem!");
-                    },
-                    complete: function (xhr, status) {
+                        },
+                        error: function (xhr, status) {
+                            alert("Sorry, there was a problem!");
+                        },
+                        complete: function (xhr, status) {
 
-                        var $child = $('.panel-body').children('div');
-                        $.each($child, function(key, entry) {
-                            // initialize Masonry after all images have loaded
-                            $(entry).imagesLoaded(function(){
-                              $(entry).masonry({
 
-                                  itemSelector: '.item'
+                            var $child = $('.panel-body').children('div');
+                            $.each($child, function(key, entry) {
+
+                                // initialize Masonry after all images have loaded
+                                $(entry).imagesLoaded(function(){
+                                    $(entry).masonry({
+                                        itemSelector: '.item'
+                                    });
                                 });
                             });
-                        });
 
-                        listener_videolisting();
-                        $('.collapse').collapse('show')
+                            listener_videolisting();
+                            $('.collapse').collapse('show');
+                            $('.wheel-button').wheelmenu({
+                                trigger: "hover",
+                                animation: "fly",
+                                animationSpeed: "fast"
+                            });
 
+                        }
+                    });
+
+                }// newly activated tab
+
+                // be aware of collision between tab and tabcontent
+                {#              if (e.target.id == 'downloadtab') {#}
+                {#                  $('#myTab a[href="#download"]').tab('show');#}
+                {#              }#}
+                // destroy jscoll when we leave preview tab
+                if (e.relatedTarget.id == 'previewtab') {
+                    // previous active tab
+                    if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+                        $('#show_videopreview').removeData('jscroll').jscroll.destroy()
                     }
-                });
-
-              }// newly activated tab
-
-              // be aware of collision between tab and tabcontent
-{#              if (e.target.id == 'downloadtab') {#}
-{#                  $('#myTab a[href="#download"]').tab('show');#}
-{#              }#}
-              // destroy jscoll when we leave preview tab
-              if (e.relatedTarget.id == 'previewtab') {
-              // previous active tab
-                  if (typeof $('#show_videopreview').jscroll.destroy == "function") {
-                    $('#show_videopreview').removeData('jscroll').jscroll.destroy()
-                  }
-              }
+                }
 
             });
 

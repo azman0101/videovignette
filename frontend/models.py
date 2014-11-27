@@ -50,7 +50,11 @@ class Box(models.Model):
     def tuple_box(self):
         return self.x, self.y, self.x2, self.y2
 
+
 class CroppedFrame(models.Model):
+    class Meta:
+        ordering = ['created_at']
+
     created_at = models.DateTimeField(auto_now_add=True, default=datetime.now, editable=True)
     video_upload_file = models.ForeignKey(VideoUploadModel, null=True)
     frame_number = models.IntegerField(verbose_name=_("Number of cropped frame"))

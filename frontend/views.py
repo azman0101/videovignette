@@ -2,7 +2,7 @@
 
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
-from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseServerError
+from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpResponseRedirect
 from django.views.generic import ListView
 from django.contrib.auth.decorators import permission_required
 
@@ -13,7 +13,7 @@ import StringIO
 import zipfile
 import os
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, reverse_lazy
 from django.views import generic
 import json
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -27,6 +27,7 @@ import subprocess
 import uuid
 import time
 from multiprocessing import Pool, Manager
+from threading import ThreadError
 import redis
 
 redis_db = redis.StrictRedis(host='localhost', port=6379, db=15)
@@ -67,8 +68,14 @@ class VideoListView(ListView):
         #    self.video = get_object_or_404(VideoUploadModel, name=self.args[0])
         #    return self.video.processed_folder
 
+@require_GET
+def delete_cropped_frame(request, pk):
+    frame = CroppedFrame.objects.get(pk=pk)
+    logger.warning("DELETION OF: " + str(frame.id))
+    frame.delete()
+    return HttpResponseRedirect('/#list_video')
 
-def ffmpeg_info(output, err):
+def ffmpeg_info(output, err, resolution=None):
     filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})",
                    'fps': "(Stream #\d.\d.*?: Video:\s?).*?([0-9]+.?[0-9]+)\s?fps"}
 
@@ -81,6 +88,10 @@ def ffmpeg_info(output, err):
         #Warning: this is always the same group number in the two filter
         if value is not None:
             data[key] = value.group(2)
+            if resolution is not None:
+                width, height = resolution.split('x')
+                data['width'] = width
+                data['height'] = height
             if key == 'duration':
                 parse_time = re.search(r'(\d{2}):([0-5][0-9]):([0-5][0-9])\.(\d{1,3})', data[key])
                 #TODO: Handle error when parse_time is not
@@ -105,6 +116,9 @@ def start_ffmpeg(param):
     configuration_name = param['configuration_name']
     abs_pathname = param['abs_pathname']
     folder_name = param['folder_name']
+    lock = param['lock']
+    #Acquire non blocking lock for getting the two ffmpeg process begins in the same time
+    lock.acquire(blocking=False)
     try:
         encodage_setting = get_object_or_404(ApplicationSetting, configuration_name=configuration_name)
     except Http404 as e:
@@ -149,15 +163,17 @@ def start_ffmpeg(param):
                 # mean:[171 125 128 ] stdev:[66.1 9.6 11.5]
 
                 #Regex for match on hex showinfo identifier and n which is probable the frame count
-                current_frame = re.search(r'\[Parsed_showinfo_\d\s?@\s?(0x[0-9a-f]+)\]\s?n:(\d+)\w?', err)
-
-                logger.warning("CURRENT_FRAME_REGEX: " + str(type(current_frame)))
+                current_frame = re.search(r'\[Parsed_showinfo_\d\s?@\s?(0x[0-9a-f]+)\]\s?n:(\d+)\w?.*?s:(\d+x\d+)\s?', err)
+                if current_frame is None:
+                    logger.warning("CURRENT_FRAME_REGEX: " + str(type(current_frame)))
+                    logger.warning("Not match for: " + err)
                 task_ffmpeg = current_frame.group(1)
+                resolution = current_frame.group(3)
                 #logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
                 #Push each value in the line containing showinfo and matching to regex
                 redis_db.rpush(task_ffmpeg, current_frame.group(2))
-                if infoheader_passed is False: #  and not redis_db.exists('info_ffmpeg')
-                    info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '')
+                if infoheader_passed is False: # and not redis_db.exists('info_ffmpeg')
+                    info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '', resolution=resolution)
                     redis_db.hmset('info_ffmpeg', info_ffmpeg)
                     logger.warning("FRAMES COUNT: " + str(info_ffmpeg['frame_count']))
                     infoheader_passed = True
@@ -165,22 +181,34 @@ def start_ffmpeg(param):
             # sys.stdout.flush()
 
     process.wait()
-    logger.warning("TASKS_PID JUST END: " + redis_db.lpop('pid'))
+    #FFMPEG process just finish (one process)
+
+    #Remove my PID from the tasks list (REDIS)
+    i_am = redis_db.lpop('pid')
+    logger.warning("TASKS_PID JUST END: " + i_am)
     logger.warning("TASKS_PID LEN: " + str(redis_db.llen('pid')))
 
     while redis_db.llen('pid') != 0:
+        #Waiting second process until it's remove it's PID from the tasks list (REDIS)
         time.sleep(1)
 
-    logger.warning("Let's flush db")
-    redis_db.flushdb()
+    try:
+        #First process release the lock, second will raise ThreadError
+        lock.release()
+        logger.warning("I'have release the Kraken : " + i_am)
+    except ThreadError as e:
+        #Second process is the last one, we don't need redis db anymore.
+        logger.warning("Let's flush db, I'm: " + i_am)
+        redis_db.flushdb()
 
     err = ''
     header_output_ffmpeg = '\n'.join(header_output_ffmpeg)
     tm = info_ffmpeg['timedelta']
-    if prefix == 'full_':
-        width, height = getimgsize(abs_pathname + '/' + prefix + 'output_00001.jpg')
-        file_instance.width = width
-        file_instance.height = height
+    if configuration_name == 'full_res':
+        logger.warning("ALL DATA info_ffmpeg: " + str(info_ffmpeg))
+        file_instance.width = info_ffmpeg['width']
+        file_instance.height = info_ffmpeg['height']
+        file_instance.save()
 
     logger.warning('Float seconds: ' + str(tm.total_seconds()))
     file_instance.duration = tm.total_seconds()
@@ -197,6 +225,7 @@ def start_ffmpeg(param):
         logger.warning('GENERATED FRAMES COUNT.. ' + str(files_count))
         file_instance.generated_images_count = files_count
     #Save instance for modification made on processed_folder and ready
+
     file_instance.save()
     return header_output_ffmpeg, err
 
@@ -268,9 +297,11 @@ def upload(request):
     pool = Pool()
     abs_pathname, folder_name = get_or_create_dir()
     configuration_to_apply = ['low_res', 'full_res']
+    manager = Manager()
+    lock = manager.Lock()
     results = pool.map(start_ffmpeg, [{'filepath': instance.video_file.path, 'file_instance': instance,
                                        'configuration_name': configuration_name, 'abs_pathname': abs_pathname,
-                                       'folder_name': folder_name} for configuration_name in configuration_to_apply])
+                                       'folder_name': folder_name, 'lock': lock} for configuration_name in configuration_to_apply])
     # for result in results:
     #     try:
     #

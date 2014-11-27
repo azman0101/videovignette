@@ -22,7 +22,13 @@
                     {% for id, frame_list in cropped_frames_video.items %}
                         {% ifequal id|add:'0' video.id|add:'0' %}
                             {% for frame in frame_list %}
-                             <div class='item'><img class='img-thumbnail' src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/></div>
+                             <div class='item'><a href="#wheel{{ frame.id }}" class="wheel-button"><img class='img-thumbnail' src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/></a></div>
+                             <ul id="wheel{{ frame.id }}" data-angle="all">
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="#home"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></li>
+                             </ul>
                             {% endfor %}
 
                         {% endifequal %}
