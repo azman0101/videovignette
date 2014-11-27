@@ -10,7 +10,7 @@
         <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ video.id }}" aria-expanded="true" aria-controls="collapse{{ video.id }}" class="collapsed">
             {% trans "See cropped parts" %}<a href="#{{ video.processed_folder }}" class="videolisting" >
                 {{ video.filename|lower }}
-            </a> - <a href="/archive/{{ video.processed_folder }}/" >
+            </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
                     <img height="48px" src="{% static 'img/archive.png' %}" />
                 </a> - {{ video.size|filesizeformat }}
         </a>
