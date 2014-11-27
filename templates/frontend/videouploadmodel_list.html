@@ -8,7 +8,7 @@
     <div class="panel-heading" role="tab" id="heading{{ video.id }}">
       <h4 class="panel-title">
         <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ video.id }}" aria-expanded="true" aria-controls="collapse{{ video.id }}" class="collapsed">
-            {% trans "See cropped parts" %}<a href="#{{ video.processed_folder }}" class="videolisting" >
+            <span class="glyphicon glyphicon-plus" aria-hidden="true"><a href="#{{ video.processed_folder }}" class="videolisting" >
                 {{ video.filename|lower }}
             </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
                     <img height="48px" src="{% static 'img/archive.png' %}" />
@@ -26,6 +26,12 @@
                              <ul id="wheel{{ frame.id }}" data-angle="all">
                                 <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
                                     <span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" data-toggle="tooltip" data-placement="top" title="{% trans "Copy to clipboard" %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" data-toggle="tooltip" data-placement="top" title="{% trans "Launch video to this point" %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-play" aria-hidden="true"></span></a>
                                 </li>
                                 <li class="item"><a href="#home"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></li>
                              </ul>
