@@ -13,9 +13,9 @@ logger.setLevel('WARNING')
 register = template.Library()
 
 @register.simple_tag()
-def to_time(term_a, term_b, *args, **kwargs):
-    logger.warning("to_time: " + str(term_a) + " x " + str(term_b))
-    time_float = term_a / term_b
+def to_time(frame, fps, *args, **kwargs):
+    logger.warning("to_time: " + str(frame) + " x " + str(fps))
+    time_float = frame / fps
     return strftime('%H:%M:%S', gmtime(int(time_float)))
 
 @register.simple_tag()
@@ -29,6 +29,8 @@ def global_duration(term, *args, **kwargs):
     logger.warning("global_duration: " + str(td))
     return str(td).strip('0')
 
+
+    return link
 # @register.filter()
 # def getimgsize(term):
 #     #Fix path to the file

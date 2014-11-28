@@ -5,6 +5,7 @@ from django.utils.translation import ugettext as _
 from datetime import datetime
 
 import logging
+from time import gmtime, strftime
 
 
 logger = logging.getLogger('videovignette')
@@ -74,6 +75,13 @@ class CroppedFrame(models.Model):
             if len(tag) > 50:
                 errors_tags[tag] = _("Tag too long !")
         logger.warning("Clean before tagging: " + str(self.tags.values()))
+
+    def to_time(self):
+        frame = self.frame_number
+        fps = self.video_upload_file.frame_per_second
+        logger.warning("MODEL to_time: " + str(frame) + " x " + str(fps))
+        time_float = frame / fps
+        return strftime('%H-%M-%S', gmtime(int(time_float)))
 
 
 

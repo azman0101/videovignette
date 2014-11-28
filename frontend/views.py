@@ -6,6 +6,7 @@ from django.http import HttpResponse, Http404, HttpResponseBadRequest, HttpRespo
 from django.views.generic import ListView
 from django.contrib.auth.decorators import permission_required
 
+from os.path import split
 from datetime import timedelta
 from PIL import Image
 import re
@@ -26,7 +27,7 @@ import subprocess
 
 import uuid
 import time
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool, Manager, Lock
 from threading import ThreadError
 import redis
 
@@ -37,6 +38,8 @@ import logging
 
 logger = logging.getLogger('videovignette')
 logger.setLevel('ERROR')
+
+lock_ffmpeg_launch = Lock()
 
 from frontend.models import VideoUploadModel, ApplicationSetting, CroppedFrame, Box
 
@@ -75,6 +78,25 @@ def delete_cropped_frame(request, pk):
     frame.delete()
     return HttpResponseRedirect('/#list_video')
 
+@require_GET
+def download_cropped_frame(request, pk):
+    cropped_frame = get_object_or_404(CroppedFrame, pk=pk)
+    video_original = cropped_frame.video_upload_file
+
+    response = HttpResponse()
+
+    cropped_frame.cropped_frame_file.open('rb')
+    # let nginx determine the correct content type
+    response['Content-Type'] = ""
+    response['Content-Disposition'] = 'attachment; filename="' + filename('Extrait_de_' +
+                                    video_original.filename.split('.')[0]) + '_' + cropped_frame.to_time() + '"'
+    response.write(cropped_frame.cropped_frame_file.read())
+    return response
+
+def filename(obj):
+    head, tail = split(obj)
+    return tail
+
 def ffmpeg_info(output, err, resolution=None):
     filters_str = {'duration': "(Duration\:\s?)(\d{2}:[0-5][0-9]:[0-5][0-9]\.\d{1,3})",
                    'fps': "(Stream #\d.\d.*?: Video:\s?).*?([0-9]+.?[0-9]+)\s?fps"}
@@ -109,10 +131,9 @@ def ffmpeg_info(output, err, resolution=None):
     return data
 
 
-
 def start_ffmpeg(param):
     filepath = param['filepath']
-    file_instance = param['file_instance']
+    file_pk = param['file_pk']
     configuration_name = param['configuration_name']
     abs_pathname = param['abs_pathname']
     folder_name = param['folder_name']
@@ -124,8 +145,9 @@ def start_ffmpeg(param):
     except Http404 as e:
         # TODO: find a way to push message to Interface via AJAX
         logger.error("Generation process will stop here, check db ApplicationSetting", str(e))
-        file_instance.ready = False
-        file_instance.save()
+        # TODO: Fix concurrent access to DB
+        redis_db.rpush('ready', False)
+        VideoUploadModel.objects.filter(pk=file_pk).update(ready=False)
         return
 
     # TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
@@ -136,13 +158,13 @@ def start_ffmpeg(param):
 
     #TO REMOVE : basename unused.
     #basename = os.path.basename(filepath)
-    file_instance.processed_folder = folder_name
+    VideoUploadModel.objects.filter(pk=file_pk).update(processed_folder=folder_name)
     if configuration_name == 'full_res':
         prefix = 'full_'
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
-    bash_command = settings.DEMUXER + ' -i ' + filepath + ' ' + encodage_setting.resize_ffmpeg_parameter +\
+    bash_command = settings.DEMUXER + ' -i ' + filepath + ' -qscale 1 ' + encodage_setting.resize_ffmpeg_parameter +\
                    '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
     #TODO: What about to use stdout to pipe response to main process ?
@@ -199,6 +221,7 @@ def start_ffmpeg(param):
     except ThreadError as e:
         #Second process is the last one, we don't need redis db anymore.
         logger.warning("Let's flush db, I'm: " + i_am)
+
         redis_db.flushdb()
 
     err = ''
@@ -206,27 +229,24 @@ def start_ffmpeg(param):
     tm = info_ffmpeg['timedelta']
     if configuration_name == 'full_res':
         logger.warning("ALL DATA info_ffmpeg: " + str(info_ffmpeg))
-        file_instance.width = info_ffmpeg['width']
-        file_instance.height = info_ffmpeg['height']
-        file_instance.save()
+        VideoUploadModel.objects.filter(pk=file_pk).update(width=info_ffmpeg['width'], height=info_ffmpeg['height'])
 
     logger.warning('Float seconds: ' + str(tm.total_seconds()))
-    file_instance.duration = tm.total_seconds()
-    file_instance.frame_per_second = info_ffmpeg['fps']
+    VideoUploadModel.objects.filter(pk=file_pk).update(duration=tm.total_seconds(), frame_per_second=info_ffmpeg['fps'])
+
 
     #if a process already set file_instance.ready to True then it's useless to count again
-    if file_instance.ready is not True:
-        file_instance.ready = True
+    if VideoUploadModel.objects.get(pk=file_pk).ready is not True:
+        VideoUploadModel.objects.filter(pk=file_pk).update(ready=True)
         logger.warning('PATH.. ' + abs_pathname)
 
         path, dirs, files = os.walk(abs_pathname).next()
         #Count only the files with prefix
         files_count = len([f for f in files if f.startswith(prefix)])
         logger.warning('GENERATED FRAMES COUNT.. ' + str(files_count))
-        file_instance.generated_images_count = files_count
+        VideoUploadModel.objects.filter(pk=file_pk).update(generated_images_count=files_count)
     #Save instance for modification made on processed_folder and ready
 
-    file_instance.save()
     return header_output_ffmpeg, err
 
 def get_or_create_dir():
@@ -299,7 +319,8 @@ def upload(request):
     configuration_to_apply = ['low_res', 'full_res']
     manager = Manager()
     lock = manager.Lock()
-    results = pool.map(start_ffmpeg, [{'filepath': instance.video_file.path, 'file_instance': instance,
+
+    results = pool.map(start_ffmpeg, [{'filepath': instance.video_file.path, 'file_pk': instance.pk,
                                        'configuration_name': configuration_name, 'abs_pathname': abs_pathname,
                                        'folder_name': folder_name, 'lock': lock} for configuration_name in configuration_to_apply])
     # for result in results:
@@ -318,6 +339,7 @@ def upload(request):
 
 
 @require_POST
+@csrf_exempt
 def upload_delete(request, pk):
     success = True
     try:

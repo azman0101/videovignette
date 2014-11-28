@@ -1,6 +1,7 @@
     {% load helperutils %}
+    {% load i18n %}
     {% if fastforward %}
-        <div class="alert-info text-center">... FASTFORWARD ...</div>
+        <div class="alert-warning text-center" id="fastforward">... {% trans 'FASTFORWARD' %} ...<a onclick="javascript:remove_Node_Before(this)">{% trans 'Remove before' %}</a></div>
     {% endif %}
     {% if count == '7' %}
         <div class="alert-success text-center">Durée: {% global_duration duration %}</div>

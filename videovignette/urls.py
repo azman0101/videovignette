@@ -23,6 +23,7 @@ urlpatterns = patterns('',
     url(r'video_list/', VideoListView.as_view(), name='video_list'),
 
     url(r'^delete_cropped_frame/(?P<pk>\d+)$', 'frontend.views.delete_cropped_frame', name='cropped_delete'),
+    url(r'^download_cropped_frame/(?P<pk>\d+)$', 'frontend.views.download_cropped_frame', name='download_cropped'),
     url(r'^([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})/$',
         VideoPreview.as_view()),
     url(r'^([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})/(?P<count>\d+)$',

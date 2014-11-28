@@ -547,6 +547,10 @@
 
             });
 
+            function remove_Node_Before(e) {
+                var $todel = $('#fastforward').parent().prevUntil('div.alert-success');
+                $todel.remove();
+            }
 
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>
