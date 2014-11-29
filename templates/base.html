@@ -527,6 +527,7 @@
                                 animation: "fly",
                                 animationSpeed: "fast"
                             });
+                            update_button();
 
                         }
                     });
@@ -546,6 +547,23 @@
                 }
 
             });
+
+            function update_button() {
+                $('.postbutton').click(function() {
+                    var $button = $(this);
+                    $.ajax({
+                        url: $(this).data('posturl'),
+                        type: 'POST',
+                        data: {'submit':true}, // An object with the key 'submit' and value 'true;
+                        success: function (result) {
+                          $($button).parentsUntil('.panel-group').remove();
+                        }
+                    });
+
+                });
+            }
+
+
 
             function remove_Node_Before(e) {
                 var $todel = $('#fastforward').parent().prevUntil('div.alert-success');
