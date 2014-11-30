@@ -1,9 +1,55 @@
-<ul>
+{% load static from staticfiles %}
+{% load i18n %}
+{% load helperutils %}
+ <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
 {% for video in object_list %}
-    {%  if video.ready %}
-        <li><a href="#{{ video.processed_folder }}" class="videolisting" >{{ video.filename|lower }}</a>  - {{ video.size|filesizeformat }}</li>
+  {%  if video.ready %}
+  <div class="panel panel-default">
+    <div class="panel-heading" role="tab" id="heading{{ video.id }}">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ video.id }}" aria-expanded="true" aria-controls="collapse{{ video.id }}" class="collapsed">
+            <span class="glyphicon glyphicon-plus" aria-hidden="true" />
+            <a href="#{{ video.processed_folder }}" class="videolisting" >
+                {{ video.filename|lower }}
+            </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
+                    <img height="48px" src="{% static 'img/archive.png' %}" />
+                </a> - {{ video.size|filesizeformat }}
+        </a>
+      </h4>
+    </div>
+    <div id="collapse{{ video.id }}" class="panel-collapse collapse" role="tabpanel" aria-labelledby="heading{{ video.id }}">
+      <div class="panel-body">
+                <div id="container{{ video.id }}" >
+                    {% for id, frame_list in cropped_frames_video.items %}
+                        {% ifequal id|add:'0' video.id|add:'0' %}
+                            {% for frame in frame_list %}
+                             <div class='item'><a href="#wheel{{ frame.id }}" class="wheel-button"><img class='img-thumbnail' src="{{ MEDIA_URL }}{{ frame.cropped_frame_file }}"/></a></div>
+                             <ul id="wheel{{ frame.id }}" data-angle="all">
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-trash" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" data-toggle="tooltip" data-placement="top" title="{% trans "Copy information to clipboard" %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-inbox" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="{% url 'cropped_delete' pk=frame.id %}" data-toggle="tooltip" data-placement="top" title="{% trans "Launch video to this point" %}" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')">
+                                    <span class="glyphicon glyphicon-play" aria-hidden="true"></span></a>
+                                </li>
+                                 <li class="item"><a href="{% url 'download_cropped' pk=frame.id %}" data-toggle="tooltip" data-placement="top" title="{% trans "Save image as" %}" >
+                                    <span class="glyphicon glyphicon-save" aria-hidden="true"></span></a>
+                                </li>
+                                <li class="item"><a href="#home"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></a></li>
+                             </ul>
+                            {% endfor %}
+
+                        {% endifequal %}
+                    {% endfor %}
+                </div>
+      </div>
+    </div>
+  </div>
     {% endif %}
 {% empty %}
     <li>No video yet.</li>
 {% endfor %}
-</ul>
+</div>
+

@@ -1,5 +1,6 @@
 {% load static from staticfiles %}
 {% load bootstrap3 %}
+{% load i18n %}
 <!DOCTYPE html>
 <!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
@@ -12,7 +13,7 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         {% bootstrap_css %}
-        <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/jquery-ui.min.css' %}">
         <style>
             body {
                 padding-top: 50px;
@@ -20,7 +21,9 @@
             }
         </style>
         {# Load CSS and JavaScript #}
+        <link rel="stylesheet" href="{% static 'css/toastr.min.css' %}">
         <link rel="stylesheet" href="{% static 'css/bootstrap-theme.min.css' %}">
+        <link rel="stylesheet" href="{% static 'css/wheelmenu.css' %}">
         <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
         <script src="{% static 'js/vendor/modernizr-2.6.2-respond-1.1.0.min.js' %}"></script>
@@ -30,7 +33,7 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
     <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
+      <div class="container-fluid">
          {% bootstrap_messages %}
         <div class="navbar-header">
           <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
@@ -39,8 +42,24 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="/">Home</a>
+          <a class="navbar-brand" href="/">{% trans "Home" %}</a>
         </div>
+          <ul class="nav pull-right">
+            <li class="dropdown">
+                <a id="dLabel" href="#" class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" role="button" aria-expanded="false">{% trans "Language" %}<b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+                {% for lang in LANGUAGES %}
+                    <li>
+                            <form name="setLang{{ lang.1 }}" action="{% url 'set_language' %}" method="POST">{% csrf_token %}
+                                <input name="next" type="hidden" value="{{ redirect_to }}" />
+                                <input type="hidden" name="language" value="{{ lang.0 }}" />
+                                <a href="#" onclick="document.setLang{{ lang.1 }}.submit();return false;">{{ lang.1 }}</a>
+                            </form>
+                    </li>
+                    {% endfor %}
+            </ul>
+            </li>
+        </ul>
         <div class="navbar-collapse collapse">
           <form class="navbar-form navbar-right" role="form">
             <div class="form-group">
@@ -49,7 +68,7 @@
             <div class="form-group">
               <input type="password" placeholder="Password" class="form-control">
             </div>
-            <button type="submit" class="btn btn-success">Sign in</button>
+            <button type="submit" class="btn btn-success">{% trans "Sign in" %}</button>
           </form>
         </div><!--/.navbar-collapse -->
       </div>
@@ -57,27 +76,47 @@
 
     <!-- Main jumbotron for a primary marketing message or call to action -->
     <div class="jumbotron">
-        <div class="container">
+        <div class="container-fluid">
             <ul class="nav nav-tabs" role="tablist" id="myTab">
-              <li class="active"><a href="#download" role="tab" data-toggle="tab">Télécharger</a></li>
-              <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">Vidéos</a></li>
-              <li><a href="#preview_tab" role="tab" id="previewtab" data-toggle="tab">Prévisualisation</a></li>
+              <li class="active"><a href="#download" id="downloadtab" role="tab" data-toggle="tab">{% trans "Download" %}</a></li>
+              <li><a href="#list_video" role="tab" id="listvideo" data-toggle="tab">{% trans "Videos" %}</a></li>
+              <li class="disabled"><a href="#preview_tab" role="tab" id="previewtab">{% trans "Preview" %}</a></li>
             </ul>
 
             <div class="tab-content">
               <div class="tab-pane active" id="download">
-                      <div class="container">
-                        <h1>Télécharger vos vidéos</h1>
-                        <p>La zone ci-dessous vous permet de déposer une ou plusieurs vidéo à traiter.</p>
+                      <div class="container-fluid">
+                        <h1>{% trans "Download your videos" %}</h1>
+                        <p>{% trans "Drop videos below and the system will upload and process them." %}</p>
                         {% load jfutags %}
+                        {% comment %} TODO: Find a way to extend self defined upload_form.html {% endcomment %}
                         {% jfu 'video_uploader.html' 'jfu_upload' %}
                       </div>
               </div>
-              <div class="tab-pane" id="list_video"><div class="container" id="show_videolist">Loading....</div></div>
-              <div class="tab-pane" id="preview_tab"><div class="container" id="show_videopreview"></div></div>
+              <div class="tab-pane" id="list_video"><div class="container-fluid" id="show_videolist">Loading....</div></div>
+              <div class="tab-pane" id="preview_tab">
+                <div class="container-fluid">
+                  <p>
+                    <label for="amount">Frame range:</label>
+                    <input type="text" id="amount" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                    </p>
+                    <div id="slider-range"></div>
+                </div>
+                  <div class="container" id="show_videopreview"></div></div>
             </div>
         </div>
     </div>
+
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" >
+    <div class="modal-content" >
+
+    </div>
+  </div>
+</div>
 
     <div class="container">
       <!-- Example row of columns -->
@@ -106,59 +145,380 @@
       </footer>
     </div> <!-- /container -->        
 	<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
+        <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
         <script src="{% static 'js/vendor/jquery.jscroll.js' %}"></script>
+        <script src="{% static 'js/vendor/jquery-ui.min.js' %}"></script>
+        <script src="{% static 'js/vendor/URI.js' %}"></script>
+        <script src="{% static 'js/vendor/jquery.Jcrop.min.js' %}"></script>
+        <script src="{% static 'js/toastr.min.js' %}"></script>
+        <script src="{% static 'js/vendor/masonry.pkgd.min.js' %}"></script>
+        <script src="{% static 'js/vendor/imagesloaded.pkgd.min.js' %}"></script>
+        <script src="{% static 'js/jquery.wheelmenu.min.js' %}"></script>
 
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
             $(function() {
-                $('#myTab a:first').tab('show');
-                target = $('#myTab a:first');
-        })
+                if(window.location.hash == '#list_video') {
+                  $('#myTab a[href="#list_video"]').tab('show');
+                } else {
+                  $('#myTab a:first').tab('show');
+                }
+                $('.dropdown-toggle').dropdown();
+            });
 
-        function listener_videolisting() {
-            $('.videolisting').click(function(e){
-                            var hash = this.hash.substring(1);
-                            $.ajax({
-                                    url: hash,
-                                    type: "GET",
-                                    dataType: "html",
-                                    success: function (data) {
-                                        $('div[id="show_videopreview"]').empty()
-                                        $('div[id="show_videopreview"]').html(data);
-                                        $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
-                                    },
-                                    error: function (xhr, status) {
-                                        alert("Sorry, there was a problem!");
-                                    },
-                                    complete: function (xhr, status) {
-                                        $('#show_videopreview').jscroll();
-                                    }
-                                });
-                        });
-        }
+            function imageLoader() {
+                console.log('TODO: Image loading lazyly')
+            }
 
-        $('#listvideo').click(function(){
-                $.ajax({
-                        url: "video_list",
+            function listener_videolisting() {
+                $('.videolisting').click(function(e){
+                    var hash = this.hash.substring(1);
+                    $.ajax({
+                        url: hash,
                         type: "GET",
                         dataType: "html",
                         success: function (data) {
-                            $('div[id="show_videolist"]').html(data);
+                            $('div[id="show_videopreview"]').empty()
+                            $('div[id="show_videopreview"]').html(data);
+                            $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
                         },
                         error: function (xhr, status) {
                             alert("Sorry, there was a problem!");
                         },
                         complete: function (xhr, status) {
-                            listener_videolisting();
+
+                            console.log("COMPLETE: " + xhr);
+                            var max = $('#nextlink').data('max');
+                            $( "#slider-range" ).slider({
+                                range: true,
+                                min: 0,
+                                max: max,
+                                values: [ 0, max ],
+                                slide: function(event, ui) {
+                                    $( "#amount" ).val(ui.values[0] + " - " + ui.values[1]);
+                                    var nextlink = $('#nextlink').attr('href');
+                                    var nt = URI(nextlink)
+                                            .search({count: ui.values[0]})
+                                            .addSearch("fastforward", true);
+                                    console.log("TEST NEXTLINK:" + nt.toString());
+                                    $('#nextlink').attr('href', nt.toString());
+                                    if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+                                        $('#show_videopreview').removeData('jscroll').jscroll.destroy()
+                                        $('#show_videopreview').jscroll({
+                                            callback: imageLoader
+                                        });
+                                    }
+
+                                }
+                            });
+                            $( "#amount" ).val( $( "#slider-range" ).slider( "values", 0 ) +
+                                    " - " + $( "#slider-range" ).slider( "values", 1 ) );
+                            $('#show_videopreview').jscroll({
+                                callback: imageLoader
+                            });
+
                         }
                     });
-                if (typeof $('#show_videopreview').jscroll.destroy == "function") {
-                    $('#show_videopreview').removeData('jscroll').jscroll.destroy()
+                });
+
+            }
+
+            function responseTag(e, ui) {
+                if (ui.content[0].id < 0) {
+
+                    toastr.options.timeOut = 1000;
+                    toastr.options.fadeOut = 250;
+                    toastr.options.fadeIn = 250;
+
+                    toastr.options.positionClass = 'toast-bottom-left';
+                    toastr[ui.content[0].label](ui.content[0].value);
+                    if (ui.content[0].id == -2) {
+                        var $input = $('<button type="button" class="btn btn-primary" id="submitBtn" >{% trans "Create the tag" %}</button>')
+                        if ($('button#submitBtn').length == 0) {
+                            $input.appendTo($('.ui-widget#tags'))
+                            $('button#submitBtn').on('click', function(ev) {
+                                $.ajax({
+                                    type: "POST",
+                                    url: "{% url 'create_tag' %}",
+                                    data: { term: $("input#tags").val(), cropped_id: $('div#tags').data('cropped-id') }
+                                })
+                                        .done(function(response_message){
+                                            //TODO: Handle 403 permission denied
+                                            toastr.options.timeOut = 3000;
+                                            toastr.options.fadeOut = 250;
+                                            toastr.options.fadeIn = 250;
+
+                                            toastr.options.positionClass = response_message.css
+
+                                            toastr[response_message.type](response_message.msg);
+                                        });
+                            });
+                        }
+                    }
+                    ui.content.splice(0, 1)
+                } else {
+                    if ($('button#submitBtn').length > 0) {
+                        $('button#submitBtn').remove()
+                    }
                 }
+
+
+
+            }
+
+            function addTag(e, ui) {
+                $.ajax({
+                    type: "POST",
+                    url: "{% url 'attach_tag' %}",
+                    data: { id: ui.item.id, term: ui.item.value, cropped_id: $('div#tags').data('cropped-id') }
+                })
+                        .done(function(response_message){
+                            toastr.options.timeOut = 1000;
+                            toastr.options.fadeOut = 250;
+                            toastr.options.fadeIn = 250;
+
+                            toastr.options.positionClass = response_message.css
+
+                            toastr[response_message.type](response_message.msg);
+                        });
+            }
+
+            function toggleTaggingBtn(ev) {
+                if (ev.type == 'mouseenter') {
+                    $(this).removeClass();
+                    $(this).addClass("btn btn-danger");
+                    $(this).text('{% trans "Ending tagging" %}');
+                    //#Unbind crop POST button when it function if for Ending tagging.
+                    $(this).unbind('click');
+                    $(this).attr('id', 'selectionEndingTaggingBtn');
+                    $(this).click(function(){
+                       $('#tags').remove();
+                       $(this).remove();
+                    });
+                } else {
+
+                    $(this).attr('id', 'selectionBtn');
+                    $(this).removeClass();
+                    $(this).addClass("btn btn-success");
+                    $(this).button('tagging');
+                }
+
+
+            }
+            function showCoords(c)
+            {
+                var $input = $('<button type="button" id="selectionBtn" ' +
+                'class="btn btn-primary" data-toggle="button" data-tagging-text="{% trans "Add Tagging ?" %}" data-content="' +
+                $('.modal-img').attr('src') + '" aria-pressed="false" autocomplete="off">' +
+                '<span class="glyphicon glyphicon-star" aria-hidden="true"></span> {% trans 'Save' %}</button>');
+
+                if ($('button#selectionBtn').length == 0) {
+                    $input.appendTo($('.modal-content'));
+
+                    $('#selectionBtn').on('click', function(){
+                        var $btn = $(this).button('tagging');
+                        var image = $(this).data('content');
+
+                        $.ajax({
+                            type: "POST",
+                            url: "{% url 'crop_selection' %}",
+                            data: { x: parseInt(c.x), y: parseInt(c.y), w: parseInt(c.w), h: parseInt(c.h),
+                                x2: parseInt(c.x2), y2: parseInt(c.y2), image_url: image }
+                        })
+                                .done(function(cropped_id) {
+                                    var $tags = $('<div class="ui-widget" id="tags" data-cropped-id=' + cropped_id + ' style="display: inline-block;"><label for="tags">Tags: </label><input id="tags"></div>');
+                                    $tags.appendTo($('.modal-content'));
+                                    $("input#tags").autocomplete({
+                                        position: { my : "right top", at: "right top", collision: "flip", within: '.jcrop-holder' },
+                                        source: "{% url 'get_tags' %}",
+                                        minLength: 2,
+                                        select: addTag,
+                                        response: responseTag
+                                    });
+                                    $btn.toggleClass("btn-success");
+                                    $("#selectionBtn").hover(toggleTaggingBtn);
+                                    $('input#tags').focus();
+
+                                });
+                        //$btn.button('reset')
+                    });
+                }
+            }
+            function releaseSelection(c)
+            {
+                $('#selectionBtn').remove()
+                $("div#tags").remove()
+            }
+
+
+            $('#myModal').on('show.bs.modal', function (event) {
+                var button = $(event.relatedTarget); // Button that triggered the modal
+                var image = button.data('content'); // Extract info from data-* attributes
+                var contentHeight = $(window).height() - 110;
+                var imgwidth = $('img.preview').data('imgwidth');
+                var imgheight = $('img.preview').data('imgheight');
+                if (imgheight > contentHeight) {
+                    newwidth = (imgwidth * contentHeight) / imgheight;
+                    newheight = contentHeight
+                }
+
+                $(this).find('.modal-content').css({
+                    'max-height': function () {
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
+                    }
+                });
+
+                $(this).find('.modal-body').css({
+                    'max-height': function () {
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
+                    }
+                });
+
+                $(this).find('.modal-dialog').css({
+                    'max-height': function () {
+                        return newheight;
+                    },
+                    'max-width': function () {
+                        return newwidth;
+                    }
+                });
+
+                $(this).find('.modal-dialog').css({
+                    'margin-top': function () {
+                        return -($(this).outerHeight() / 5);
+                    },
+                    'margin-left': function () {
+                        return ($(this).outerWidth() / 5);
+                    }
+                });
+                var modal = $(this);
+                modal.find('.modal-content').append('<img class="modal-img" src=' + image + '/>');
+                {% comment %}$(this).find('.modal-img').css({
+                    'max-height': function () {
+                        return contentHeight;
+                    }
+                });{% endcomment %}
+
+                $('.modal-img').attr('width', newwidth);
+                $('.modal-img').attr('height', newheight);
+                $('.modal-img').Jcrop({
+                    boxHeight: newheight,
+                    boxWidth: newwidth,
+                    trueSize: [imgwidth, imgheight],
+                    onRelease: releaseSelection,
+                    onSelect: showCoords,
+                    keySupport: false
+                });
+
+            });
+            var fileuploadprogress_interval;
+            function get_progress() {
+                $.ajax({
+                    url: "{% url 'get_progress' %}",
+                    type: "GET",
+                    dataType: "json",
+                    success: function (data) {
+                        $('#progressbareee').progressbar('value', data.progress);
+                        if (data.progress > 99.999) {
+                            clearInterval(fileuploadprogress_interval);
+                        }
+                    },
+                    error: function (xhr, status) {
+                        console.log(status);
+                    },
+                    complete: function (xhr, status) {
+
+                        console.log(status);
+                    }
+                });
+            }
+
+
+            $('#fileupload').bind('fileuploadstart', function (e, data) {
+                fileuploadprogress_interval = setInterval(get_progress, 1000);
+                var $progressbar = $('<div id="progressbareee"></div>');
+                $progressbar.appendTo($('div.container-fluid'));
+                $('#progressbareee').progressbar();
             });
 
+{#            $('#fileupload').bind('fileuploadstop', function (e, data) {#}
+{#                clearInterval(fileuploadprogress_interval);#}
+{#            });#}
+
+            $('#myModal').on('hide.bs.modal', function (event) {
+                $('.modal-content').empty();
+            });
+
+            $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+                if (e.target.id == 'previewtab') {
+                    var parent = $('#previewtab').parent();
+
+
+                }
+                if (e.target.id == 'listvideo') {
+                    $.ajax({
+                        url: "{% url 'video_list' %}",
+                        type: "GET",
+                        dataType: "html",
+                        success: function (data) {
+                            $('div[id="show_videolist"]').html(data);
+
+                        },
+                        error: function (xhr, status) {
+                            alert("Sorry, there was a problem!");
+                        },
+                        complete: function (xhr, status) {
+
+
+                            var $child = $('.panel-body').children('div');
+                            $.each($child, function(key, entry) {
+
+                                // initialize Masonry after all images have loaded
+                                $(entry).imagesLoaded(function(){
+                                    $(entry).masonry({
+                                        itemSelector: '.item'
+                                    });
+                                });
+                            });
+
+                            listener_videolisting();
+                            $('.collapse').collapse('show');
+                            $('.wheel-button').wheelmenu({
+                                trigger: "hover",
+                                animation: "fly",
+                                animationSpeed: "fast"
+                            });
+
+                        }
+                    });
+
+                }// newly activated tab
+
+                // be aware of collision between tab and tabcontent
+                {#              if (e.target.id == 'downloadtab') {#}
+                {#                  $('#myTab a[href="#download"]').tab('show');#}
+                {#              }#}
+                // destroy jscoll when we leave preview tab
+                if (e.relatedTarget.id == 'previewtab') {
+                    // previous active tab
+                    if (typeof $('#show_videopreview').jscroll.destroy == "function") {
+                        $('#show_videopreview').removeData('jscroll').jscroll.destroy()
+                    }
+                }
+
+            });
+
+            function remove_Node_Before(e) {
+                var $todel = $('#fastforward').parent().prevUntil('div.alert-success');
+                $todel.remove();
+            }
 
         </script>
         <script src="{% static 'js/plugins.js' %}"></script>

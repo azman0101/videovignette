@@ -3,6 +3,8 @@ from django.contrib import admin
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.conf.urls.i18n import i18n_patterns
+
 import logging
 from frontend.views import Home, VideoListView, VideoPreview
 
@@ -15,16 +17,26 @@ urlpatterns = patterns('',
     # url(r'^$', 'videovignette.views.home', name='home'),
     # url(r'^blog/', include('blog.urls'))
     # You may optionally define a delete url as well
-    url(r'^delete/(?P<pk>\d+)$', 'frontend.views.upload_delete', name = 'jfu_delete' ),
-    url(r'upload/', 'frontend.views.upload', name = 'jfu_upload' ), #name rend obligatoire le POST
-    url(r'video_list/', VideoListView.as_view()),
+    url(r'^delete/(?P<pk>\d+)$', 'frontend.views.upload_delete', name='jfu_delete'),
+    url(r'upload/', 'frontend.views.upload', name='jfu_upload' ), #name rend obligatoire le POST
+
+    url(r'video_list/', VideoListView.as_view(), name='video_list'),
+
+    url(r'^delete_cropped_frame/(?P<pk>\d+)$', 'frontend.views.delete_cropped_frame', name='cropped_delete'),
+    url(r'^download_cropped_frame/(?P<pk>\d+)$', 'frontend.views.download_cropped_frame', name='download_cropped'),
     url(r'^([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})/$',
         VideoPreview.as_view()),
     url(r'^([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})/(?P<count>\d+)$',
         VideoPreview.as_view()),
-#    url(r'^$', 'frontend.views.current_datetime', name='current_datetime'),
-#    url(r'^my_view$', 'frontend.views.my_view', name='my_view'),
-    url(r'^$', Home.as_view()),
+    url(r'^archive/([a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12})/$',
+        'frontend.views.archivegenerator'),
+    url(r'crop_selection', 'frontend.views.cropselection', name='crop_selection'),
+    url(r'attach_tag', 'frontend.views.attach_tag', name='attach_tag'),
+    url(r'create_tag', 'frontend.views.create_tag', name='create_tag'),
+    url(r'^get_tags', 'frontend.views.get_tags', name='get_tags'),
+    url(r'^get_progress', 'frontend.views.get_progress', name='get_progress'),
+    url(r'^$', Home.as_view(), name='home'),
+    url(r'^i18n/', include('django.conf.urls.i18n')),
     url(r'^admin/', include(admin.site.urls)),
 ) + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
