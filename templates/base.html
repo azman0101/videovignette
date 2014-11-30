@@ -147,7 +147,6 @@
 	<!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script> -->
         <script>window.jQuery || document.write('<script src="static/js/vendor/jquery-1.11.1.min.js"><\/script>')</script>
         <script src="{% static 'js/vendor/jquery.jscroll.js' %}"></script>
-        <script src="{% static 'js/airview.min.js' %}"></script>
         <script src="{% static 'js/vendor/jquery-ui.min.js' %}"></script>
         <script src="{% static 'js/vendor/URI.js' %}"></script>
         <script src="{% static 'js/vendor/jquery.Jcrop.min.js' %}"></script>
@@ -167,37 +166,6 @@
                 }
                 $('.dropdown-toggle').dropdown();
             });
-
-        // Create an observer instance
-{% comment %}
-          var observer = new MutationObserver(function( mutations ) {
-          mutations.forEach(function( mutation ) {
-            var newNodes = mutation.addedNodes; // DOM NodeList
-            if( newNodes !== null ) { // If there are new nodes added
-                var $nodes = $( newNodes ); // jQuery set
-                $nodes.each(function() {
-                    var $node = $( this );
-                    if( $node.hasClass( "jscroll-inner" ) ) {
-                        console.log(mutations, observer);
-                        $("img[class='preview']").airview({container: '#show_videopreview', placement: 'bottom'});
-
-                    }
-                });
-            }
-          });
-        });
-
-
-        var target = $("#show_videopreview")[0];
-
-        // define what element should be observed by the observer
-        // and what types of mutations trigger the callback
-        observer.observe(target, {
-          subtree: true,
-          attributes: false,
-          childList: true
-          //...
-        });{% endcomment %}
 
             function imageLoader() {
                 console.log('TODO: Image loading lazyly')
