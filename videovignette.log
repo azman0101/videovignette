@@ -1,0 +1,84 @@
+*** Starting uWSGI 2.0.8 (64bit) on [Sun Nov 30 17:28:52 2014] ***
+compiled with version: 4.8.2 on 30 November 2014 16:39:28
+os: Linux-3.13.0-40-generic #69-Ubuntu SMP Thu Nov 13 17:53:56 UTC 2014
+nodename: dev-pc
+machine: x86_64
+clock source: unix
+pcre jit disabled
+detected number of CPU cores: 4
+current working directory: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+detected binary path: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+your processes number limit is 95133
+limiting address space of processes...
+your process address space limit is 1073741824 bytes (1024 MB)
+your memory page size is 4096 bytes
+ *** WARNING: you have enabled harakiri without post buffering. Slow upload could be rejected on post-unbuffered webservers *** 
+detected max file descriptor number: 40000
+lock engine: pthread robust mutexes
+thunder lock: disabled (you can enable it with --thunder-lock)
+uwsgi socket 0 bound to UNIX address /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock fd 3
+Python version: 2.7.6 (default, Mar 22 2014, 23:03:41)  [GCC 4.8.2]
+Set PythonHome to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette
+*** Python threads support is disabled. You can enable it with --enable-threads ***
+Python main interpreter initialized at 0x1ed5c90
+your server socket listen backlog is limited to 100 connections
+your mercy for graceful operations on workers is 60 seconds
+mapped 800448 bytes (781 KB) for 10 cores
+*** Operational MODE: preforking ***
+WSGI app 0 (mountpoint='') ready in 0 seconds on interpreter 0x1ed5c90 pid: 26346 (default app)
+mountpoint  already configured. skip.
+*** uWSGI is running in multiple interpreter mode ***
+spawned uWSGI master process (pid: 26346)
+spawned uWSGI worker 1 (pid: 26351, cores: 1)
+spawned uWSGI worker 2 (pid: 26352, cores: 1)
+spawned uWSGI worker 3 (pid: 26353, cores: 1)
+spawned uWSGI worker 4 (pid: 26354, cores: 1)
+spawned uWSGI worker 5 (pid: 26355, cores: 1)
+spawned uWSGI worker 6 (pid: 26356, cores: 1)
+spawned uWSGI worker 7 (pid: 26357, cores: 1)
+spawned uWSGI worker 8 (pid: 26358, cores: 1)
+spawned uWSGI worker 9 (pid: 26359, cores: 1)
+spawned uWSGI worker 10 (pid: 26360, cores: 1)
+*** Starting uWSGI 2.0.8 (64bit) on [Sun Nov 30 17:28:57 2014] ***
+compiled with version: 4.8.2 on 30 November 2014 16:39:28
+os: Linux-3.13.0-40-generic #69-Ubuntu SMP Thu Nov 13 17:53:56 UTC 2014
+nodename: dev-pc
+machine: x86_64
+clock source: unix
+pcre jit disabled
+detected number of CPU cores: 4
+current working directory: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+detected binary path: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+your processes number limit is 95133
+limiting address space of processes...
+your process address space limit is 1073741824 bytes (1024 MB)
+your memory page size is 4096 bytes
+ *** WARNING: you have enabled harakiri without post buffering. Slow upload could be rejected on post-unbuffered webservers *** 
+detected max file descriptor number: 40000
+lock engine: pthread robust mutexes
+thunder lock: disabled (you can enable it with --thunder-lock)
+uwsgi socket 0 bound to UNIX address /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock fd 3
+Python version: 2.7.6 (default, Mar 22 2014, 23:03:41)  [GCC 4.8.2]
+Set PythonHome to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette
+*** Python threads support is disabled. You can enable it with --enable-threads ***
+Python main interpreter initialized at 0xf6ec90
+your server socket listen backlog is limited to 100 connections
+your mercy for graceful operations on workers is 60 seconds
+mapped 800448 bytes (781 KB) for 10 cores
+*** Operational MODE: preforking ***
+WSGI app 0 (mountpoint='') ready in 0 seconds on interpreter 0xf6ec90 pid: 26366 (default app)
+mountpoint  already configured. skip.
+*** uWSGI is running in multiple interpreter mode ***
+spawned uWSGI master process (pid: 26366)
+spawned uWSGI worker 1 (pid: 26371, cores: 1)
+spawned uWSGI worker 2 (pid: 26372, cores: 1)
+spawned uWSGI worker 3 (pid: 26373, cores: 1)
+spawned uWSGI worker 4 (pid: 26374, cores: 1)
+spawned uWSGI worker 5 (pid: 26375, cores: 1)
+spawned uWSGI worker 6 (pid: 26376, cores: 1)
+spawned uWSGI worker 7 (pid: 26377, cores: 1)
+spawned uWSGI worker 8 (pid: 26378, cores: 1)
+spawned uWSGI worker 9 (pid: 26379, cores: 1)
+spawned uWSGI worker 10 (pid: 26380, cores: 1)

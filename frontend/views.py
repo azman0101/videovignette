@@ -164,6 +164,11 @@ def start_ffmpeg(param):
     else:
         prefix = 'low_'
     #TODO: dynamically choose the right decoding app (ffmpeg or avconv)
+    """
+    TODO: Find a better way for "ffmpeg filters" Ex: ffmpeg -i input.mpg -vf "movie=watermark.png [logo]; [in][logo]
+    overlay=W-w-10:H-h-10, fade=in:0:20 [out]" output.mpg
+    """
+
     bash_command = settings.DEMUXER + ' -i ' + filepath + ' -qscale 1 ' + encodage_setting.resize_ffmpeg_parameter +\
                    '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
     logger.warning('start_ffmpeg: ' + bash_command)
