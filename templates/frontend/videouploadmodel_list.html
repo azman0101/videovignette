@@ -8,12 +8,12 @@
     <div class="panel-heading" role="tab" id="heading{{ video.id }}">
       <h4 class="panel-title">
         <a data-toggle="collapse" data-parent="#accordion" href="#collapse{{ video.id }}" aria-expanded="true" aria-controls="collapse{{ video.id }}" class="collapsed">
-            <span class="glyphicon glyphicon-plus" aria-hidden="true" />
+            <span class="glyphicon glyphicon-plus" aria-hidden="true" ></span>
             <a href="#{{ video.processed_folder }}" class="videolisting" >
                 {{ video.filename|lower }}
             </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
                     <img height="48px" src="{% static 'img/archive.png' %}" />
-                </a> - {{ video.size|filesizeformat }}
+                </a> <button type="button" class="btn btn-default postbutton" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')" data-posturl="{% url 'jfu_delete' video.pk %}">Remove</button> -  {{ video.size|filesizeformat }}
         </a>
       </h4>
     </div>
