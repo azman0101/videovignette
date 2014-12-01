@@ -82,3 +82,139 @@ spawned uWSGI worker 7 (pid: 26377, cores: 1)
 spawned uWSGI worker 8 (pid: 26378, cores: 1)
 spawned uWSGI worker 9 (pid: 26379, cores: 1)
 spawned uWSGI worker 10 (pid: 26380, cores: 1)
+...brutally killing workers...
+...brutally killing workers...
+worker 1 buried after 2 seconds
+worker 2 buried after 2 seconds
+worker 3 buried after 2 seconds
+worker 4 buried after 2 seconds
+worker 5 buried after 2 seconds
+worker 6 buried after 2 seconds
+worker 7 buried after 2 seconds
+worker 8 buried after 2 seconds
+worker 9 buried after 2 seconds
+worker 10 buried after 2 seconds
+binary reloading uWSGI...
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+closing all non-uwsgi socket fds > 2 (max_fd = 40000)...
+found fd 3 mapped to socket 0 (/home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock)
+running /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+worker 1 buried after 2 seconds
+worker 2 buried after 2 seconds
+worker 3 buried after 2 seconds
+worker 4 buried after 2 seconds
+worker 5 buried after 2 seconds
+worker 6 buried after 2 seconds
+worker 7 buried after 2 seconds
+worker 8 buried after 2 seconds
+worker 9 buried after 2 seconds
+worker 10 buried after 2 seconds
+binary reloading uWSGI...
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+closing all non-uwsgi socket fds > 2 (max_fd = 40000)...
+found fd 3 mapped to socket 0 (/home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock)
+running /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+[uWSGI] getting INI configuration from videovignette_uwsgi.ini
+*** Starting uWSGI 2.0.8 (64bit) on [Sun Nov 30 16:53:45 2014] ***
+compiled with version: 4.8.2 on 30 November 2014 16:39:28
+os: Linux-3.13.0-40-generic #69-Ubuntu SMP Thu Nov 13 17:53:56 UTC 2014
+nodename: dev-pc
+machine: x86_64
+clock source: unix
+pcre jit disabled
+detected number of CPU cores: 4
+current working directory: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+detected binary path: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+your processes number limit is 95133
+limiting address space of processes...
+your process address space limit is 1073741824 bytes (1024 MB)
+your memory page size is 4096 bytes
+ *** WARNING: you have enabled harakiri without post buffering. Slow upload could be rejected on post-unbuffered webservers *** 
+detected max file descriptor number: 40000
+lock engine: pthread robust mutexes
+thunder lock: disabled (you can enable it with --thunder-lock)
+uwsgi socket 0 inherited UNIX address /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock fd 3
+[uWSGI] getting INI configuration from videovignette_uwsgi.ini
+*** Starting uWSGI 2.0.8 (64bit) on [Sun Nov 30 16:53:45 2014] ***
+compiled with version: 4.8.2 on 30 November 2014 16:39:28
+os: Linux-3.13.0-40-generic #69-Ubuntu SMP Thu Nov 13 17:53:56 UTC 2014
+nodename: dev-pc
+machine: x86_64
+clock source: unix
+pcre jit disabled
+detected number of CPU cores: 4
+current working directory: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+detected binary path: /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette/bin/uwsgi
+chdir() to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette
+your processes number limit is 95133
+limiting address space of processes...
+your process address space limit is 1073741824 bytes (1024 MB)
+your memory page size is 4096 bytes
+ *** WARNING: you have enabled harakiri without post buffering. Slow upload could be rejected on post-unbuffered webservers *** 
+detected max file descriptor number: 40000
+lock engine: pthread robust mutexes
+thunder lock: disabled (you can enable it with --thunder-lock)
+uwsgi socket 0 inherited UNIX address /home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette_uwsgi.sock fd 3
+Python version: 2.7.6 (default, Mar 22 2014, 23:03:41)  [GCC 4.8.2]
+Set PythonHome to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette
+Python version: 2.7.6 (default, Mar 22 2014, 23:03:41)  [GCC 4.8.2]
+Set PythonHome to /home/dev/Documents/PROJECT_VIDEOVIGNETTE/env_videovignette
+*** Python threads support is disabled. You can enable it with --enable-threads ***
+Python main interpreter initialized at 0xfea9b0
+your server socket listen backlog is limited to 100 connections
+your mercy for graceful operations on workers is 60 seconds
+*** Python threads support is disabled. You can enable it with --enable-threads ***
+Python main interpreter initialized at 0xd7a9b0
+your server socket listen backlog is limited to 100 connections
+your mercy for graceful operations on workers is 60 seconds
+mapped 800448 bytes (781 KB) for 10 cores
+*** Operational MODE: preforking ***
+mapped 800448 bytes (781 KB) for 10 cores
+*** Operational MODE: preforking ***
+Traceback (most recent call last):
+  File "./videovignette/wsgi.py", line 11, in <module>
+    import pydevd
+Traceback (most recent call last):
+ImportError:   File "./videovignette/wsgi.py", line 11, in <module>
+No module named pydevd
+unable to load app 0 (mountpoint='') (callable not found or import error)
+    import pydevd
+ImportError: No module named pydevd
+unable to load app 0 (mountpoint='') (callable not found or import error)
+Traceback (most recent call last):
+Traceback (most recent call last):
+  File "/home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette/wsgi.py", line 11, in <module>
+  File "/home/dev/Documents/PROJECT_VIDEOVIGNETTE/videovignette/videovignette/wsgi.py", line 11, in <module>
+    import pydevd
+    import pydevd
+ImportError: ImportErrorNo module named pydevd: 
+No module named pydevd
+unable to load app 0 (mountpoint='') (callable not found or import error)
+unable to load app 0 (mountpoint='') (callable not found or import error)
+*** no app loaded. going in full dynamic mode ***
+*** no app loaded. going in full dynamic mode ***
+*** uWSGI is running in multiple interpreter mode ***
+*** uWSGI is running in multiple interpreter mode ***
+gracefully (RE)spawned uWSGI master process (pid: 26346)
+gracefully (RE)spawned uWSGI master process (pid: 26366)
+spawned uWSGI worker 1 (pid: 28452, cores: 1)
+spawned uWSGI worker 1 (pid: 28453, cores: 1)
+spawned uWSGI worker 2 (pid: 28455, cores: 1)
+spawned uWSGI worker 2 (pid: 28454, cores: 1)
+spawned uWSGI worker 3 (pid: 28456, cores: 1)
+spawned uWSGI worker 3 (pid: 28457, cores: 1)
+spawned uWSGI worker 4 (pid: 28459, cores: 1)
+spawned uWSGI worker 4 (pid: 28458, cores: 1)
+spawned uWSGI worker 5 (pid: 28460, cores: 1)
+spawned uWSGI worker 5 (pid: 28461, cores: 1)
+spawned uWSGI worker 6 (pid: 28462, cores: 1)
+spawned uWSGI worker 6 (pid: 28463, cores: 1)
+spawned uWSGI worker 7 (pid: 28465, cores: 1)
+spawned uWSGI worker 7 (pid: 28464, cores: 1)
+spawned uWSGI worker 8 (pid: 28466, cores: 1)
+spawned uWSGI worker 8 (pid: 28467, cores: 1)
+spawned uWSGI worker 9 (pid: 28468, cores: 1)
+spawned uWSGI worker 9 (pid: 28469, cores: 1)
+spawned uWSGI worker 10 (pid: 28470, cores: 1)
+spawned uWSGI worker 10 (pid: 28471, cores: 1)

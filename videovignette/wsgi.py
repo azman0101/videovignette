@@ -7,16 +7,15 @@ For more information on this file, see
 https://docs.djangoproject.com/en/1.7/howto/deployment/wsgi/
 """
 
-add_pydev_egg_to_syspath()
 import os
-from pydev import pydevd
+#from pydev import pydevd
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "videovignette.settings")
 
 from django.core.wsgi import get_wsgi_application
-_application = get_wsgi_application()
+application = get_wsgi_application()
 
 
-def application(environ, start_response):
-    pydevd.settrace('192.168.1.145', port=8999, stdoutToServer=True, stderrToServer=True, suspend=False)
-    return _application(environ, start_response)
+# def application(environ, start_response):
+#     #pydevd.settrace('192.168.1.145', port=8999, stdoutToServer=True, stderrToServer=True, suspend=False)
+#     return _application(environ, start_response)

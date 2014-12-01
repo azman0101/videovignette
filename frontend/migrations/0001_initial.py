@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(verbose_name='ID', serialize=False, auto_created=True, primary_key=True)),
                 ('configuration_name', models.CharField(default=b'low_res', max_length=100)),
-                ('resize_ffmpeg_parameter', models.CharField(default=b'-vf scale=320:-1', max_length=100, null=True)),
+                ('resize_ffmpeg_parameter', models.CharField(default=b'-vf scale=320:-1 ', max_length=100, null=True)),
             ],
             options={
             },

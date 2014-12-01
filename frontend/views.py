@@ -32,7 +32,7 @@ from threading import ThreadError
 import redis
 
 redis_db = redis.StrictRedis(host='localhost', port=6379, db=15)
-
+redis_db.flushdb()
 import logging
 
 
@@ -185,20 +185,29 @@ def start_ffmpeg(param):
                 header_output_ffmpeg.append(err)
             if 'showinfo' in err:
 
-                #EXEMPLE: [Parsed_showinfo_0 @ 0x1c5c0a0] n:64 pts:66 pts_time:2.64 pos:522970 fmt:yuv420p sar:1/1
+                # EXEMPLE: [Parsed_showinfo_0 @ 0x1c5c0a0] n:64 pts:66 pts_time:2.64 pos:522970 fmt:yuv420p sar:1/1
                 # s:1920x1072 i:P iskey:0 type:P checksum:BC04CF1A plane_checksum:[1ABBF73C 4E648C19 D8B04BB6]
                 # mean:[171 125 128 ] stdev:[66.1 9.6 11.5]
 
-                #Regex for match on hex showinfo identifier and n which is probable the frame count
+                # Regex for match on hex showinfo identifier and n which is probable the frame count
                 current_frame = re.search(r'\[Parsed_showinfo_\d\s?@\s?(0x[0-9a-f]+)\]\s?n:(\d+)\w?.*?s:(\d+x\d+)\s?', err)
                 if current_frame is None:
+                    #Frame output undecodable
                     logger.warning("CURRENT_FRAME_REGEX: " + str(type(current_frame)))
                     logger.warning("Not match for: " + err)
-                task_ffmpeg = current_frame.group(1)
-                resolution = current_frame.group(3)
-                #logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
-                #Push each value in the line containing showinfo and matching to regex
-                redis_db.rpush(task_ffmpeg, current_frame.group(2))
+                    task_ffmpeg = None
+                    resolution = None
+                    frame_number = None
+                else:
+                    #Frame output decodable
+                    task_ffmpeg = current_frame.group(1)
+                    resolution = current_frame.group(3)
+                    frame_number = current_frame.group(2)
+                    # logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
+                    # Push each value in the line containing showinfo and matching to regex
+
+                redis_db.rpush(task_ffmpeg, frame_number)
+
                 if infoheader_passed is False: # and not redis_db.exists('info_ffmpeg')
                     info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '', resolution=resolution)
                     redis_db.hmset('info_ffmpeg', info_ffmpeg)
@@ -238,7 +247,6 @@ def start_ffmpeg(param):
 
     logger.warning('Float seconds: ' + str(tm.total_seconds()))
     VideoUploadModel.objects.filter(pk=file_pk).update(duration=tm.total_seconds(), frame_per_second=info_ffmpeg['fps'])
-
 
     #if a process already set file_instance.ready to True then it's useless to count again
     if VideoUploadModel.objects.get(pk=file_pk).ready is not True:
@@ -321,6 +329,7 @@ def upload(request):
 
     pool = Pool()
     abs_pathname, folder_name = get_or_create_dir()
+    redis_db.hset(folder_name, 'upload', True)
     configuration_to_apply = ['low_res', 'full_res']
     manager = Manager()
     lock = manager.Lock()
