@@ -14,7 +14,7 @@ import StringIO
 import zipfile
 import os
 from django.conf import settings
-from django.core.urlresolvers import reverse, reverse_lazy
+from django.core.urlresolvers import reverse
 from django.views import generic
 import json
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -151,10 +151,10 @@ def start_ffmpeg(param):
         return
 
     # TODO: check if file exists ! Really ... this is FOR DEBUG ONLY
-    logger.warning("Check if exits yet... " + filepath)
+    logger.warning("Check if exits yet... " + str(filepath))
     while not os.path.exists(filepath):
         time.sleep(1)
-        logger.warning("File don't exits yet... " + filepath)
+        logger.warning("File don't exits yet... " + str(filepath))
 
     #TO REMOVE : basename unused.
     #basename = os.path.basename(filepath)
@@ -168,10 +168,18 @@ def start_ffmpeg(param):
     TODO: Find a better way for "ffmpeg filters" Ex: ffmpeg -i input.mpg -vf "movie=watermark.png [logo]; [in][logo]
     overlay=W-w-10:H-h-10, fade=in:0:20 [out]" output.mpg
     """
+    try:
 
-    bash_command = settings.DEMUXER + ' -i ' + filepath + ' -qscale 1 ' + encodage_setting.resize_ffmpeg_parameter +\
-                   '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
-    logger.warning('start_ffmpeg: ' + bash_command)
+        logger.warn("settings.DEMUXER: " + str(type(settings.DEMUXER)))
+        logger.warn("filepath: " + str(type(filepath)))
+        logger.warn("encodage_setting.resize_ffmpeg_parameter: " + str(type(encodage_setting.resize_ffmpeg_parameter)))
+        logger.warn("abs_pathname: " + str(type(abs_pathname)))
+        logger.warn("prefix: " + str(type(prefix)))
+        bash_command = settings.DEMUXER + ' -i ' + filepath + ' -qscale 1 ' + encodage_setting.resize_ffmpeg_parameter +\
+                       '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
+        logger.warning('start_ffmpeg: ' + bash_command)
+    except TypeError as e:
+        logger.error('TypeError !!!!: ' + str(e.message))
     #TODO: What about to use stdout to pipe response to main process ?
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=1, close_fds=True)
     header_output_ffmpeg = []
@@ -194,7 +202,7 @@ def start_ffmpeg(param):
                 if current_frame is None:
                     #Frame output undecodable
                     logger.warning("CURRENT_FRAME_REGEX: " + str(type(current_frame)))
-                    logger.warning("Not match for: " + err)
+                    logger.warning("Not match for: " + str(err))
                     task_ffmpeg = None
                     resolution = None
                     frame_number = None
@@ -206,7 +214,8 @@ def start_ffmpeg(param):
                     # logger.warning("IN WHILE: %s %s " %(current_frame.group(1), current_frame.group(2)))
                     # Push each value in the line containing showinfo and matching to regex
 
-                redis_db.rpush(task_ffmpeg, frame_number)
+                if task_ffmpeg is not None:
+                    redis_db.rpush(task_ffmpeg, frame_number)
 
                 if infoheader_passed is False: # and not redis_db.exists('info_ffmpeg')
                     info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '', resolution=resolution)
@@ -221,7 +230,7 @@ def start_ffmpeg(param):
 
     #Remove my PID from the tasks list (REDIS)
     i_am = redis_db.lpop('pid')
-    logger.warning("TASKS_PID JUST END: " + i_am)
+    logger.warning("TASKS_PID JUST END: " + str(i_am))
     logger.warning("TASKS_PID LEN: " + str(redis_db.llen('pid')))
 
     while redis_db.llen('pid') != 0:
@@ -231,10 +240,10 @@ def start_ffmpeg(param):
     try:
         #First process release the lock, second will raise ThreadError
         lock.release()
-        logger.warning("I'have release the Kraken : " + i_am)
+        logger.warning("I'have release the Kraken : " + str(i_am))
     except ThreadError as e:
         #Second process is the last one, we don't need redis db anymore.
-        logger.warning("Let's flush db, I'm: " + i_am)
+        logger.warning("Let's flush db, I'm: " + str(i_am))
 
         redis_db.flushdb()
 
@@ -251,7 +260,7 @@ def start_ffmpeg(param):
     #if a process already set file_instance.ready to True then it's useless to count again
     if VideoUploadModel.objects.get(pk=file_pk).ready is not True:
         VideoUploadModel.objects.filter(pk=file_pk).update(ready=True)
-        logger.warning('PATH.. ' + abs_pathname)
+        logger.warning('PATH.. ' + str(abs_pathname))
 
         path, dirs, files = os.walk(abs_pathname).next()
         #Count only the files with prefix
@@ -282,11 +291,11 @@ def get_progress(request):
         #Adjustment to stick to reality ;)
         count = ((count/2.0+2)/frame_count_redis)*100.0
         logger.warning("GETPROG %: " + str(count))
-        data['progress'] = str(int(count))
+        data['progress'] = int(count)
         if count >= 100:
-            data['progress'] = '100'
+            data['progress'] = 100
     else:
-        data['progress'] = '100'
+        data['progress'] = 100
 
     data = json.dumps(data)
     mimetype = 'application/json'
@@ -313,8 +322,11 @@ def upload(request):
     logger.warning(str(video.size))
     logger.warning(str(instance))
     instance.save()
+    filepath = instance.video_file.path
+    logger.warning("File PATH: " + str(type(filepath)))
+    assert isinstance(filepath, basestring)
 
-    basename = os.path.basename(instance.video_file.path)
+    basename = os.path.basename(filepath)
 
     file_dict = {
         'name': basename,
@@ -333,8 +345,8 @@ def upload(request):
     configuration_to_apply = ['low_res', 'full_res']
     manager = Manager()
     lock = manager.Lock()
-
-    results = pool.map(start_ffmpeg, [{'filepath': instance.video_file.path, 'file_pk': instance.pk,
+    lock_ffmpeg_launch.acquire()
+    results = pool.map(start_ffmpeg, [{'filepath': filepath, 'file_pk': instance.pk,
                                        'configuration_name': configuration_name, 'abs_pathname': abs_pathname,
                                        'folder_name': folder_name, 'lock': lock} for configuration_name in configuration_to_apply])
     # for result in results:
@@ -348,7 +360,9 @@ def upload(request):
     #         # TODO: Retry process with another decoding app (ffmpeg or avconv)
     #         logger.error("Error: FFMPEG" + str(e))
     #         return HttpResponseServerError(content='FFMPEG Error ' + str(e))
-
+    lock_ffmpeg_launch.release()
+    #logger.warning("BEFOR UPLOAD POST RESPONSE: " + str(request))
+    #logger.warning("BEFOR UPLOAD POST RESPONSE: " + str(file_dict))
     return UploadResponse(request, file_dict)
 
 
@@ -365,7 +379,7 @@ def upload_delete(request, pk):
         time.sleep(1)
         if os.path.isfile(instance.video_file.path):
             raise Exception('File is not deleted')
-        logger.warning("Have to delete %s" % instance.video_file.path)
+        logger.warning("Have to delete %s" % str(instance.video_file.path))
         instance.delete()
     except VideoUploadModel.DoesNotExist:
         success = False

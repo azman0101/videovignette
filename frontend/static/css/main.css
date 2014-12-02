@@ -4,7 +4,27 @@
    Author's custom styles
    ========================================================================== */
 
+#progressbar {
+    margin-top: 20px;
+}
 
+.ui-progressbar {
+  position: relative;
+}
+
+.ui-progressbar-value {
+  transition: width 0.5s;
+  -webkit-transition: width 0.5s;
+}
+
+.progress-label {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 #fff;
+}
 
 
 

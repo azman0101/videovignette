@@ -13,7 +13,7 @@
                 {{ video.filename|lower }}
             </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
                     <img height="48px" src="{% static 'img/archive.png' %}" />
-                </a> <button type="button" class="btn btn-default postbutton" onclick="return confirm('{% trans 'Do you confirm deletion ?' %}')" data-posturl="{% url 'jfu_delete' video.pk %}">Remove</button> -  {{ video.size|filesizeformat }}
+                </a> <button type="button" class="btn btn-default postbutton" onclick="deleteConfirm = confirm('{% trans 'Do you confirm deletion ?' %}')" data-posturl="{% url 'jfu_delete' video.pk %}">Remove</button> -  {{ video.size|filesizeformat }}
         </a>
       </h4>
     </div>

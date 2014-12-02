@@ -155,6 +155,7 @@
         <script src="{% static 'js/vendor/imagesloaded.pkgd.min.js' %}"></script>
         <script src="{% static 'js/jquery.wheelmenu.min.js' %}"></script>
 
+
         {% bootstrap_javascript %}
 
         <script type="application/javascript" >
@@ -419,16 +420,19 @@
 
             });
             var fileuploadprogress_interval;
-            function get_progress() {
+            function get_progress(e) {
+                var $progressbar = $(e);
                 $.ajax({
                     url: "{% url 'get_progress' %}",
                     type: "GET",
                     dataType: "json",
                     success: function (data) {
-                        $('#progressbareee').progressbar('value', data.progress);
-                        if (data.progress > 99.999) {
+                        var $val = $progressbar.progressbar("value");
+                        $progressbar.progressbar( "value", parseInt(data['progress'], 10) );
+                        if (data['progress'] == 100) {
                             clearInterval(fileuploadprogress_interval);
                         }
+                        console.log(data);
                     },
                     error: function (xhr, status) {
                         console.log(status);
@@ -442,15 +446,25 @@
 
 
             $('#fileupload').bind('fileuploadstart', function (e, data) {
-                fileuploadprogress_interval = setInterval(get_progress, 1000);
-                var $progressbar = $('<div id="progressbareee"></div>');
-                $progressbar.appendTo($('div.container-fluid'));
-                $('#progressbareee').progressbar();
+
+                var $progress_parent = $('.filedecode-progress');
+                var $progressbar = $('#progressbar');
+
+                $progressbar.progressbar();
+
+                $('.progress-label').fadeIn();
+                fileuploadprogress_interval = setInterval(get_progress, 1000, $progressbar);
+
+
+            });
+            $('#fileupload').bind('fileuploadchunkdone', function (e, data) {
+
+                console.log("ProgressBar value: " + $progressbar.progressbar("value"));
+
             });
 
-{#            $('#fileupload').bind('fileuploadstop', function (e, data) {#}
-{#                clearInterval(fileuploadprogress_interval);#}
-{#            });#}
+
+
 
             $('#myModal').on('hide.bs.modal', function (event) {
                 $('.modal-content').empty();
@@ -518,6 +532,9 @@
 
             function update_button() {
                 $('.postbutton').click(function() {
+
+                    if (!deleteConfirm) return false;
+
                     var $button = $(this);
                     $.ajax({
                         url: $(this).data('posturl'),
@@ -536,6 +553,7 @@
             function remove_Node_Before(e) {
                 var $todel = $('#fastforward').parent().prevUntil('div.alert-success');
                 $todel.remove();
+                $('#fastforward').remove();
             }
 
         </script>
