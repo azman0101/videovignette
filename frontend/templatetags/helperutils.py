@@ -25,3 +25,10 @@ def global_duration(term, *args, **kwargs):
     logger.warning("global_duration: " + str(hours) + ' - ' + str(minutes) + ' - ' + str(seconds) + ' - ' + str(microseconds))
     logger.warning("global_duration: " + str(td))
     return str(td).strip('0')
+
+@register.simple_tag()
+def toastr(title, message):
+
+    toast = "toastr.options = { 'positionClass': 'toast-bottom-full-width', 'showDuration': '700',  'hideDuration': '1000',  'timeOut': '5000',  'extendedTimeOut': '1000',  'showEasing': 'swing',  'hideEasing': 'linear',  'showMethod': 'fadeIn',  'hideMethod': 'fadeOut'};"
+    toast += " toastr['info']('" + title + "', '" + message + "');"
+    return toast

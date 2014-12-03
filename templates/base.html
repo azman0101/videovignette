@@ -431,6 +431,8 @@
                         $progressbar.progressbar( "value", parseInt(data['progress'], 10) );
                         if (data['progress'] == 100) {
                             clearInterval(fileuploadprogress_interval);
+                            $progressbar.progressbar( "value", 0 );
+                            $('.progress-label').fadeOut('250');
                         }
                         console.log(data);
                     },
@@ -445,14 +447,14 @@
             }
 
 
-            $('#fileupload').bind('fileuploadstart', function (e, data) {
+            $('#fileupload').bind('fileuploadsend', function (e, data) {
 
                 var $progress_parent = $('.filedecode-progress');
                 var $progressbar = $('#progressbar');
 
                 $progressbar.progressbar();
 
-                $('.progress-label').fadeIn();
+                $('.progress-label').fadeIn('100');
                 fileuploadprogress_interval = setInterval(get_progress, 1000, $progressbar);
 
 
@@ -483,7 +485,6 @@
                         dataType: "html",
                         success: function (data) {
                             $('div[id="show_videolist"]').html(data);
-
                         },
                         error: function (xhr, status) {
                             alert("Sorry, there was a problem!");

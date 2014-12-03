@@ -11,7 +11,8 @@
             <span class="glyphicon glyphicon-plus" aria-hidden="true" ></span>
             <a href="#{{ video.processed_folder }}" class="videolisting" >
                 {{ video.filename|lower }}
-            </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" title="{% trans "Download full video sequence (experimantal)" %}">
+                                                                                                                        {%  trans 'Be patient please !' as thetitle %} {% trans 'The hamster is about to finish your archive ;)' as themessage %}
+            </a> - <a href="/archive/{{ video.processed_folder }}/" data-toggle="tooltip" data-placement="top" onclick="{% toastr thetitle themessage %}" title="{% trans "Download full video sequence (experimantal)" %}">
                     <img height="48px" src="{% static 'img/archive.png' %}" />
                 </a> <button type="button" class="btn btn-default postbutton" onclick="deleteConfirm = confirm('{% trans 'Do you confirm deletion ?' %}')" data-posturl="{% url 'jfu_delete' video.pk %}">Remove</button> -  {{ video.size|filesizeformat }}
         </a>
