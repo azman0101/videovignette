@@ -16,6 +16,12 @@ app = Celery('videovignette')
 app.config_from_object('django.conf:settings')
 app.autodiscover_tasks(lambda: settings.INSTALLED_APPS)
 
+app.conf.update(
+    CELERY_RESULT_BACKEND='djcelery.backends.database:DatabaseBackend',
+    CELERY_TRACK_STARTED=True,
+)
+
+
 
 @app.task(bind=True)
 def debug_task(self):

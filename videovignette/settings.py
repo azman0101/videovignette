@@ -74,6 +74,7 @@ INSTALLED_APPS = (
     'bootstrap3',
     'jfu',
     'taggit',
+    'djcelery',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -108,6 +109,7 @@ elif OS == 'Darwin':
 
 BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
 
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases

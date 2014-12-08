@@ -243,8 +243,7 @@
                                     type: "POST",
                                     url: "{% url 'create_tag' %}",
                                     data: { term: $("input#tags").val(), cropped_id: $('div#tags').data('cropped-id') }
-                                })
-                                        .done(function(response_message){
+                                }).done(function(response_message){
                                             //TODO: Handle 403 permission denied
                                             toastr.options.timeOut = 3000;
                                             toastr.options.fadeOut = 250;
@@ -257,14 +256,21 @@
                             });
                         }
                     }
-                    ui.content.splice(0, 1)
+                    ui.content.splice(0, 1);
                 } else {
-                    if ($('button#submitBtn').length > 0) {
-                        $('button#submitBtn').remove()
+                    if ($("#submitBtn").length) {
+                        $("#submitBtn").remove();
                     }
                 }
+            }
 
+            function openTag(e, ui) {
 
+                var autocomplete = $(".ui-autocomplete");
+                var oldTop = autocomplete.offset().top;
+                var newTop = oldTop - autocomplete.height();
+
+                autocomplete.css("top", newTop);
 
             }
 
@@ -335,7 +341,8 @@
                                         source: "{% url 'get_tags' %}",
                                         minLength: 2,
                                         select: addTag,
-                                        response: responseTag
+                                        response: responseTag,
+                                        open: openTag
                                     });
                                     $btn.toggleClass("btn-success");
                                     $("#selectionBtn").hover(toggleTaggingBtn);
@@ -362,6 +369,9 @@
                 if (imgheight > contentHeight) {
                     newwidth = (imgwidth * contentHeight) / imgheight;
                     newheight = contentHeight
+                } else {
+                    newwidth = imgwidth
+                    newheight = imgheight
                 }
 
                 $(this).find('.modal-content').css({
@@ -466,8 +476,6 @@
             });
 
 
-
-
             $('#myModal').on('hide.bs.modal', function (event) {
                 $('.modal-content').empty();
             });
@@ -479,6 +487,7 @@
 
                 }
                 if (e.target.id == 'listvideo') {
+                    clearInterval(fileuploadprogress_interval);
                     $.ajax({
                         url: "{% url 'video_list' %}",
                         type: "GET",

@@ -131,6 +131,7 @@ def ffmpeg_info(output, err, resolution=None):
     data['timedelta'] = tm
     logger.error("TOTAL SECONDS: " + str(tm.total_seconds()))
     logger.error("FPS: " + str(float(data['fps'])))
+
     data['frame_count'] = int(tm.total_seconds()*float(data['fps']))
     return data
 
@@ -377,7 +378,7 @@ def upload_delete(request, pk):
         try:
             os.unlink(instance.video_file.path)
         except Exception as e:
-            logger.error("FILE IS NOT DELETED!!!!!!!!!!!!!!!!!!" + str(e))
+            loggedis_.error("FILE IS NOT DELETED!!!!!!!!!!!!!!!!!!" + str(e))
         time.sleep(1)
         if os.path.isfile(instance.video_file.path):
             raise Exception('File is not deleted')

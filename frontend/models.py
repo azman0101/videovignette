@@ -1,11 +1,17 @@
 from django.db import models
+from django.conf import settings
+
+from .tasks import delete_path
+
 from taggit.managers import TaggableManager
 from taggit.models import TaggedItemBase
 from django.utils.translation import ugettext as _
 from datetime import datetime
+import shutil
 
 import logging
 from time import gmtime, strftime
+import os.path
 
 
 logger = logging.getLogger('videovignette')
@@ -13,7 +19,7 @@ logger.setLevel('ERROR')
 
 class VideoUploadModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, default=datetime.now)
-    video_file = models.FileField()
+    video_file = models.FileField(null=True)
     filename = models.CharField(max_length=100)
     size = models.IntegerField()
     frame_per_second = models.FloatField(verbose_name=_('FPS'), null=True)
@@ -25,6 +31,25 @@ class VideoUploadModel(models.Model):
 
     generated_images_count = models.BigIntegerField(null=True)
     ready = models.BooleanField(default=False)
+
+    def delete(self, using=None):
+        try:
+            # You have to prepare what you need before delete the model
+            storage, path = self.video_file.storage, self.video_file.path
+            # Delete the file after the model
+            storage.delete(path)
+        except ValueError:
+            pass
+        finally:
+            # Delete the model before the file
+            to_delete = settings.MEDIA_ROOT + self.processed_folder
+            # if os.path.exists(to_delete):
+            #     shutil.rmtree(to_delete)
+            delete_path(to_delete)
+            super(VideoUploadModel, self).delete(using)
+
+
+
 
 class TaggedFrame(TaggedItemBase):
     content_object = models.ForeignKey('CroppedFrame')
