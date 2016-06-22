@@ -86,7 +86,7 @@
             <div class="tab-content">
               <div class="tab-pane active" id="download">
                       <div class="container-fluid">
-                        <h1>{% trans "Download your videos" %}</h1>
+                        <h1>{% trans "Download your videos<sup>Alpha</sup>" %}</h1>
                         <p>{% trans "Drop videos below and the system will upload and process them." %}</p>
                         {% load jfutags %}
                         {% comment %} TODO: Find a way to extend self defined upload_form.html {% endcomment %}
@@ -180,7 +180,7 @@
                         type: "GET",
                         dataType: "html",
                         success: function (data) {
-                            $('div[id="show_videopreview"]').empty()
+                            $('div[id="show_videopreview"]').empty();
                             $('div[id="show_videopreview"]').html(data);
                             $('#myTab a[href="#preview_tab"]').tab('show'); // Select tab by name
                         },
@@ -348,7 +348,18 @@
                                     $("#selectionBtn").hover(toggleTaggingBtn);
                                     $('input#tags').focus();
 
-                                });
+                                })
+                                .fail(function(jqXHR, textStatus, errorThrown) {
+                                    var response_message = $.parseJSON(jqXHR.responseText);
+                                    toastr.options.timeOut = 1000;
+                                    toastr.options.fadeOut = 250;
+                                    toastr.options.fadeIn = 250;
+
+                                    toastr.options.positionClass = response_message.css
+
+                                    toastr[response_message.type](response_message.msg);
+                                }
+                        );
                         //$btn.button('reset')
                     });
                 }
