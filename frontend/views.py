@@ -221,7 +221,7 @@ def start_ffmpeg(param):
 				if task_ffmpeg is not None:
 					redis_db.rpush(task_ffmpeg, frame_number)
 
-				if infoheader_passed is False:  # and not redis_db.exists('info_ffmpeg')
+				if infoheader_passed is False and resolution is not None:  # and not redis_db.exists('info_ffmpeg')
 					info_ffmpeg = ffmpeg_info('\n'.join(header_output_ffmpeg), '', resolution=resolution)
 					redis_db.hmset('info_ffmpeg', info_ffmpeg)
 					logger.error("FRAMES COUNT: " + str(info_ffmpeg['frame_count']))
@@ -593,8 +593,19 @@ def cropselection(request):
 	posted_dict = request.POST.dict()
 	path, folder, image = extract_path_folder_img(posted_dict)
 	assert (not posted_dict.has_key('image_url'))
-	# update dict by casting value to int
-	[posted_dict.update({k: int(v)}) for k, v in posted_dict.iteritems()]
+	try:
+		# update dict by casting value to int
+		[posted_dict.update({k: int(v)}) for k, v in posted_dict.iteritems()]
+	except Exception as e:
+		logger.error("CropSelection update posted_dict: %s" % str(e))
+		toastr_json = dict()
+		toastr_json['type'] = 'error'
+		toastr_json['css'] = 'toast-bottom-left'
+		toastr_json['msg'] = _("No boxing limits were definied :/")
+		data = json.dumps(toastr_json)
+		mimetype = 'application/json'
+		return HttpResponseServerError(data, mimetype)
+
 	box = Box.create(box=posted_dict)
 
 	instance_video = VideoUploadModel.objects.get(processed_folder=folder)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2014-11-27 09:51+0000\n"
+"POT-Creation-Date: 2015-10-19 07:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,120 +17,178 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: frontend/models.py:18
+#: frontend/admin.py:50
+msgid "Related Video"
+msgstr ""
+
+#: frontend/admin.py:84
+msgid ""
+"Remove related video file (will not delete processed files neither selected "
+"entry)"
+msgstr ""
+
+#: frontend/admin.py:85
+msgid "Remove video upload model and all attached files"
+msgstr ""
+
+#: frontend/models.py:25
 msgid "FPS"
 msgstr "FPS"
 
-#: frontend/models.py:19
+#: frontend/models.py:26
 msgid "Duration"
 msgstr "Durée"
 
-#: frontend/models.py:20
+#: frontend/models.py:27
 msgid "Height in px"
 msgstr "Hauteur en pixel"
 
-#: frontend/models.py:21
+#: frontend/models.py:28
 msgid "Width in px"
 msgstr "Largeur en pixel"
 
-#: frontend/models.py:56
+#: frontend/models.py:86
 msgid "Number of cropped frame"
 msgstr "Nombre d'extraction de frame"
 
-#: frontend/models.py:71
+#: frontend/models.py:101
 msgid "Tag too long !"
 msgstr "Tag trop long !"
 
-#: frontend/views.py:414
+#: frontend/views.py:495
 msgid "Tag already exists, just select it by the list"
 msgstr "Le tag existe déjà, séléctionnez le dans la liste pour l'associer."
 
-#: frontend/views.py:421
+#: frontend/views.py:502
 #, python-format
 msgid "%s created but not attached, re-search it by the list for attaching it"
 msgstr ""
 "Le tag %s a été créé, cependant il n'est pas encore associé à l'image. <br /"
 "> Cherchez le de nouveau pour l'associer."
 
-#: frontend/views.py:441
+#: frontend/views.py:523
 #, python-format
 msgid "%s tag already attached"
 msgstr "tag %s est déjà associé"
 
-#: frontend/views.py:449
+#: frontend/views.py:531
 #, python-format
 msgid "%s tag added"
 msgstr "tag %s ajouté"
 
-#: frontend/views.py:454
+#: frontend/views.py:536
 msgid "No tag attached"
 msgstr "Aucun tag associés"
 
-#: frontend/views.py:478
+#: frontend/views.py:561
 msgid "warning"
 msgstr "warning"
 
-#: frontend/views.py:479
+#: frontend/views.py:562
 msgid "Your are not authorized to create tags"
 msgstr "Vous n'êtes pas authorisé à créer des tags"
 
-#: frontend/views.py:483
+#: frontend/views.py:566
 msgid "info"
 msgstr "info"
 
-#: frontend/views.py:484
+#: frontend/views.py:567
 msgid "You get permission to create your own tags"
 msgstr "Vous êtes authorisé à créer des tags"
 
-#: templates/base.html:44
+#: frontend/views.py:604
+msgid "No boxing limits were definied :/"
+msgstr ""
+
+#: templates/base.html:45
 msgid "Home"
 msgstr "Accueil"
 
-#: templates/base.html:48
+#: templates/base.html:49
 msgid "Language"
 msgstr "Langage"
 
-#: templates/base.html:70
+#: templates/base.html:71
 msgid "Sign in"
 msgstr "Se connecter"
 
-#: templates/base.html:80
+#: templates/base.html:81
 msgid "Download"
 msgstr "Téléchargement"
 
-#: templates/base.html:81
+#: templates/base.html:82
 msgid "Videos"
 msgstr "Vidéos"
 
-#: templates/base.html:82
+#: templates/base.html:83
 msgid "Preview"
 msgstr "Prévisualisation"
 
-#: templates/base.html:88
-msgid "Download your videos"
-msgstr "Telecharger vos videos"
-
 #: templates/base.html:89
+#, fuzzy
+#| msgid "Download your videos<sup>Alpha</sup>"
+msgid "Download your videos<sup>Alpha</sup>"
+msgstr "Telecharger vos videos<sup>Alpha</sup>"
+
+#: templates/base.html:90
 msgid "Drop videos below and the system will upload and process them."
 msgstr ""
 "La zone ci-dessous vous permet de déposer une ou plusieurs vidéo à traiter."
 
-#: templates/base.html:255
+#: templates/base.html:239
 msgid "Create the tag"
 msgstr "Créer un tag"
 
-#: templates/base.html:309
+#: templates/base.html:299
 msgid "Ending tagging"
 msgstr "Terminer"
 
-#: templates/base.html:330
+#: templates/base.html:320
 msgid "Add Tagging ?"
 msgstr "Tagger ?"
 
-#: templates/base.html:332
+#: templates/base.html:322
 msgid "Save"
 msgstr "Sauvegarder"
 
-#: templates/frontend/videouploadmodel_list.html:11
-msgid "See cropped parts"
-msgstr "Images associées"
+#: templates/frontend/videouploadmodel_list.html:14
+msgid "Be patient please !"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:14
+msgid "The hamster is about to finish your archive ;)"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:15
+msgid "Download full video sequence (experimantal)"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:17
+#: templates/frontend/videouploadmodel_list.html:29
+#: templates/frontend/videouploadmodel_list.html:32
+#: templates/frontend/videouploadmodel_list.html:35
+msgid "Do you confirm deletion ?"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:32
+msgid "Copy information to clipboard"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:35
+msgid "Launch video to this point"
+msgstr ""
+
+#: templates/frontend/videouploadmodel_list.html:38
+msgid "Save image as"
+msgstr ""
+
+#: templates/videopreview.html:4
+msgid "FASTFORWARD"
+msgstr ""
+
+#: templates/videopreview.html:4
+msgid "Remove before"
+msgstr ""
+
+#~ msgid "See cropped parts"
+#~ msgstr "Images associées"
