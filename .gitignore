@@ -1,5 +1,5 @@
 .DS_Store
-
+venv_*/
 !frontend/migrations/0001_initial.py
 frontend/migrations/*
 media/*
