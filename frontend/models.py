@@ -18,7 +18,7 @@ logger = logging.getLogger('videovignette')
 logger.setLevel('ERROR')
 
 class VideoUploadModel(models.Model):
-    created_at = models.DateTimeField(auto_now_add=True, default=datetime.now)
+    created_at = models.DateTimeField(auto_now_add=True)
     video_file = models.FileField(null=True)
     filename = models.CharField(max_length=100)
     size = models.IntegerField()
@@ -81,7 +81,7 @@ class CroppedFrame(models.Model):
     class Meta:
         ordering = ['created_at']
 
-    created_at = models.DateTimeField(auto_now_add=True, default=datetime.now, editable=True)
+    created_at = models.DateTimeField(auto_now_add=True, editable=True)
     video_upload_file = models.ForeignKey(VideoUploadModel, null=True)
     frame_number = models.IntegerField(verbose_name=_("Number of cropped frame"))
     box = models.ForeignKey(Box, null=True)

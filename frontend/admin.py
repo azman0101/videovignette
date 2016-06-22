@@ -39,13 +39,14 @@ class CroppedFrameForm(forms.ModelForm):
 
     class Meta:
         model = CroppedFrame
-
+	fields = '__all__'
     cropped_frame_file = forms.ImageField(label='Cropped frame', widget=AdminImageWidget)
 
 class VideoUploadModelForm(forms.ModelForm):
 
     class Meta:
         model = VideoUploadModel
+	fields = '__all__'
 
     video_file = forms.FileField(label=_('Related Video'), required=False)
 

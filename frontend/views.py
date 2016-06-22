@@ -176,7 +176,7 @@ def start_ffmpeg(param):
 		logger.error("encodage_setting.resize_ffmpeg_parameter: " + str(type(resize_ffmpeg_parameter)))
 		logger.error("abs_pathname: " + str(type(abs_pathname)))
 		logger.error("prefix: " + str(type(prefix)))
-		bash_command = settings.DEMUXER + ' -i ' + filepath + ' -qscale 1 ' + resize_ffmpeg_parameter + \
+		bash_command = settings.DEMUXER + ' -i ' + filepath + ' -q:v 1 ' + resize_ffmpeg_parameter + \
 		               '-vf showinfo -an -f image2 ' + abs_pathname + '/' + prefix + 'output_%05d.jpg'
 		logger.error('start_ffmpeg: ' + bash_command)
 	except TypeError as e:
@@ -215,7 +215,7 @@ def start_ffmpeg(param):
 					task_ffmpeg = current_frame.group(1)
 					resolution = current_frame.group(3)
 					frame_number = current_frame.group(2)
-					logger.error("IN WHILE: task_ffmpeg: %s | resolution: %s | frame_number: %s" %(task_ffmpeg, resolution, frame_number))
+					logger.info("IN WHILE: task_ffmpeg: %s | resolution: %s | frame_number: %s" %(task_ffmpeg, resolution, frame_number))
 				# Push each value in the line containing showinfo and matching to regex
 
 				if task_ffmpeg is not None:

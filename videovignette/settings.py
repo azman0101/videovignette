@@ -117,8 +117,8 @@ if OS == 'Darwin' or OS == 'Linux':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
-            'NAME': 'videodb',
-            'USER': 'dev',
+            'NAME': 'db_videovignette',
+            'USER': 'user_video',
             'PASSWORD': 'Azerty123**',
             'HOST': '127.0.0.1',
         }

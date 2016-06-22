@@ -24,7 +24,7 @@ class SimpleTest(TestCase):
     @override_settings(MEDIA_URL='/media_test/',
                        MEDIA_ROOT=os.path.join(TEST_DIR, 'media_test/'))
     def test_video_ogv(self):
-
+	logger.info(TEST_DIR)
         with open(TEST_DIR + '/frontend/test_data/out.ogv') as fp:
             logger.warning("test_video_ogv settings: " + settings.MEDIA_ROOT)
             response = self.client.post('/upload/', {'files[]': fp})

@@ -1,4 +1,4 @@
-libjpeg-dev libtiff-dev libfreetype6 libfreetype6-dev zlib1g-dev
+libjpeg-dev libtiff-dev libfreetype6 libfreetype6-dev zlib1g-dev ffmpeg
 
 
 
